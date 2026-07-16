@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@prestamos/api/*": ["./apps/api/src/*"],
+      "@prestamos/web/*": ["./apps/web/src/*"],
+      "@prestamos/shared": ["./packages/shared/src"],
+      "@prestamos/shared/*": ["./packages/shared/src/*"]
+    }
+  }
+}

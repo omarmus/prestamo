@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.turbo/
+.env
+.env.local
+prisma/generated/
+.next/
+.cache/
+*.tsbuildinfo
+
+*storybook.log
+storybook-static
+
+# OS
+.DS_Store
+
+# Generated indexes (rebuildable)
+.codegraph/
+
+# Personal agent tooling
+.atl/
+
+# Generated type shims
+vitest.shims.d.ts
+
+# Storybook CLI scaffold (default templates)
+/stories/
