@@ -5,6 +5,7 @@ import './globals.css';
 import '../bones/registry';
 import { Geist } from "next/font/google";
 import { cn } from "../lib/utils";
+import { AuthProvider } from '../providers/auth-provider';
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -20,7 +21,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={cn("font-sans", geist.variable)}>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
