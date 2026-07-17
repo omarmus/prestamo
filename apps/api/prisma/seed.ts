@@ -42,7 +42,7 @@ async function main(): Promise<void> {
   });
 
   const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { phone: '+59160000000' },
     update: { passwordHash },
     create: {
       email: adminEmail,
