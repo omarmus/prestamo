@@ -114,3 +114,8 @@ These rules are NOT optional. Every agent working on this project MUST follow th
 - No escribir documentación redundante — solo lo que un agente nuevo necesitaría saber.
 - Mantener `log.md` actualizado con entradas por fecha y cambio significativo.
 - No crear archivos nuevos en OKF sin aprobación explícita.
+
+### 5. Probar endpoints nuevos con curl
+- Después de implementar nuevos endpoints REST, probarlos con `curl` antes de hacer commit.
+- Incluir en la prueba: status code, estructura de respuesta, y un caso de error.
+- Documentar los curls en el PR description o en `docs/okf/` si el endpoint es parte de una API pública.

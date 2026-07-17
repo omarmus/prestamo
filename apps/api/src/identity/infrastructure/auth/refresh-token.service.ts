@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { Redis } from 'ioredis';
 import { REDIS_CLIENT } from '../redis.provider';
 import type { RefreshTokenService, ConsumeResult } from '../../application/ports/refresh-token-service.port';
-import { PrismaService } from '../persistence/prisma/prisma.service';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class RefreshTokenServiceImpl implements RefreshTokenService {

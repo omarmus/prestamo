@@ -20,6 +20,9 @@ Plataforma de préstamos digitales para el mercado boliviano. Arquitectura DDD +
 - [Domain](domain/) — modelo de dominio
 - [Decisions](decisions/) — ADRs y decisiones técnicas
 - [Operations](ops.md) — Docker, CI/CD, despliegue
+- [Data Models](data-models.md) — modelo de datos completo extraído del DAD (02-49)
+- [Roadmap](roadmap.md) — plan de implementación MVP por fases
+- [Tables MVP](tables-mvp.md) — listado completo de las 28 tablas del MVP
 
 ## Quick Links
 

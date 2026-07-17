@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String?
+  deletedAt      DateTime?
+  version        Int      @default(1)
+
+  createdById String?
+  createdBy   User?  @relation("RoleCreatedBy", fields: [createdById], references: [id])
+  updatedById String?
+  updatedBy   User?  @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
+  deletedById String?
+  deletedBy   User?  @relation("RoleDeletedBy", fields: [deletedById], references: [id])
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String?
+  passwordHash String
+  name         String
+  phone        String   @unique
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organizationId String?
+  deletedAt      DateTime?
+  version        Int      @default(1)
+
+  createdById String?
+  createdBy   User?  @relation("UserCreatedBy", fields: [createdById], references: [id])
+  updatedById String?
+  updatedBy   User?  @relation("UserUpdatedBy", fields: [updatedById], references: [id])
+  deletedById String?
+  deletedBy   User?  @relation("UserDeletedBy", fields: [deletedById], references: [id])
+
+  // Roles created/updated/deleted by this user
+  rolesCreatedBy  Role[]  @relation("RoleCreatedBy")
+  rolesUpdatedBy  Role[]  @relation("RoleUpdatedBy")
+  rolesDeletedBy  Role[]  @relation("RoleDeletedBy")
+  usersCreatedBy  User[]  @relation("UserCreatedBy")
+  usersUpdatedBy  User[]  @relation("UserUpdatedBy")
+  usersDeletedBy  User[]  @relation("UserDeletedBy")
+
+  auditLogs              AuditLog[]
+  configsUpdated         SystemConfiguration[]
+  whatsappContacts       WhatsAppContact[]
+}
+
+model FailedLoginAttempt {
+  id        String   @id @default(uuid())
+  email     String
+  ip        String
+  timestamp DateTime @default(now())
+
+  organizationId String?
+  deletedAt      DateTime?
+  version        Int      @default(1)
+  createdById    String?
+  updatedById    String?
+  deletedById    String?
+}
+
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  entityType String
+  entityId   String
+  action     String
+  actorId    String
+  changes    Json?
+  sourceIp   String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model SystemConfiguration {
+  key         String   @id
+  value       Json
+  description String?
+  updatedById String
+  updatedAt   DateTime @updatedAt
+
+  updatedBy User? @relation(fields: [updatedById], references: [id])
+}
+
+model WhatsAppContact {
+  id            String   @id @default(uuid())
+  phone         String   @unique
+  name          String?
+  userId        String?  @unique
+  user          User?    @relation(fields: [userId], references: [id])
+  conversations WhatsAppConversation[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WhatsAppConversation {
+  id        String   @id @default(uuid())
+  contactId String
+  contact   WhatsAppContact @relation(fields: [contactId], references: [id])
+  messages  WhatsAppMessage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WhatsAppMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id])
+  direction      String   // incoming | outgoing
+  messageType    String   // text | interactive | image
+  content        String?
+  metaId         String?  // Meta message ID for dedup
+  status         String   @default("sent")  // sent | delivered | read | failed
+  createdAt      DateTime @default(now())
+}
+
+model ChatbotSession {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  intent    String   // REGISTER | APPLY_LOAN | CHECK_STATUS | HELP
+  state     String   // collecting_name | collecting_email | confirming | etc
+  data      Json?    // { name?, email?, amount?, termMonths?, purpose? }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

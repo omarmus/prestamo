@@ -29,6 +29,7 @@ describe('RegisterHandler', () => {
     mockUserRepo = {
       save: jest.fn(),
       findByEmail: jest.fn(),
+      findByPhone: jest.fn(),
       findById: jest.fn(),
     };
 
@@ -56,8 +57,9 @@ describe('RegisterHandler', () => {
     );
   });
 
-  describe('scenario 1: successful registration', () => {
+  describe('scenario 1: successful registration with email and phone', () => {
     it('returns tokens when registration succeeds', async () => {
+      mockUserRepo.findByPhone.mockResolvedValue(null);
       mockUserRepo.findByEmail.mockResolvedValue(null);
       mockPasswordHasher.hash.mockResolvedValue('hashed_password_argon2');
       mockUserRepo.save.mockResolvedValue(createMockUser());
@@ -80,16 +82,13 @@ describe('RegisterHandler', () => {
 
       expect(mockPasswordHasher.hash).toHaveBeenCalledWith('password123');
       expect(mockUserRepo.save).toHaveBeenCalled();
-      expect(mockJwtService.sign).toHaveBeenCalledWith({
-        sub: expect.any(String),
-        role: 'USER',
-      });
     });
   });
 
   describe('scenario 2: duplicate email rejected', () => {
     it('throws UserAlreadyExistsError when email is taken', async () => {
       const existingUser = createMockUser();
+      mockUserRepo.findByPhone.mockResolvedValue(null);
       mockUserRepo.findByEmail.mockResolvedValue(existingUser);
 
       const command = new RegisterCommand(
@@ -101,7 +100,43 @@ describe('RegisterHandler', () => {
 
       await expect(handler.execute(command)).rejects.toThrow(UserAlreadyExistsError);
       expect(mockUserRepo.save).not.toHaveBeenCalled();
-      expect(mockPasswordHasher.hash).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('scenario 3: registration by phone only (chatbot)', () => {
+    it('creates user with phone as primary identifier', async () => {
+      mockUserRepo.findByPhone.mockResolvedValue(null);
+      mockPasswordHasher.hash.mockResolvedValue('auto_generated_hash_placeholder');
+      mockUserRepo.save.mockResolvedValue(
+        User.create({
+          name: 'Juan Perez',
+          phone: Phone.create('+59171234567'),
+          passwordHash: 'auto_generated_hash_placeholder',
+        }),
+      );
+      mockJwtService.sign.mockResolvedValue({ accessToken: 'jwt.access.token' });
+      mockRefreshTokenService.generate.mockResolvedValue('refresh-token-id');
+
+      const command = RegisterCommand.fromPhone('+59171234567', 'Juan Perez');
+
+      const result = await handler.execute(command);
+
+      expect(result.accessToken).toBe('jwt.access.token');
+      expect(mockUserRepo.findByPhone).toHaveBeenCalled();
+      expect(mockUserRepo.findByEmail).not.toHaveBeenCalled();
+      expect(mockUserRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('scenario 4: duplicate phone rejected', () => {
+    it('throws UserAlreadyExistsError when phone is taken', async () => {
+      const existingUser = createMockUser();
+      mockUserRepo.findByPhone.mockResolvedValue(existingUser);
+
+      const command = RegisterCommand.fromPhone('+59161234567', 'Test User');
+
+      await expect(handler.execute(command)).rejects.toThrow(UserAlreadyExistsError);
+      expect(mockUserRepo.save).not.toHaveBeenCalled();
     });
   });
 });

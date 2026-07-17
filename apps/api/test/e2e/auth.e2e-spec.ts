@@ -1,10 +1,11 @@
 import type { INestApplication, CanActivate } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
+import request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 
 import { IdentityModule } from '../../src/identity/identity.module';
-import { PrismaService } from '../../src/identity/infrastructure/persistence/prisma/prisma.service';
+import { SharedModule } from '../../src/shared/shared.module';
+import { PrismaService } from '../../src/shared/prisma/prisma.service';
 import { DomainErrorFilter } from '../../src/shared/filters/domain-error.filter';
 import { JwtAuthGuard } from '../../src/shared/guards/jwt-auth.guard';
 
@@ -28,6 +29,7 @@ describe('Auth API (e2e)', () => {
           envFilePath: '../../.env',
           isGlobal: true,
         }),
+        SharedModule,
         IdentityModule,
       ],
     })
@@ -45,6 +47,7 @@ describe('Auth API (e2e)', () => {
   beforeEach(async () => {
     // Clean test users before each test
     await prisma.user.deleteMany({ where: { email: { contains: 'e2e-test' } } });
+    await prisma.user.deleteMany({ where: { email: { contains: 'e2e-soft-delete' } } });
   });
 
   afterAll(async () => {
@@ -193,6 +196,66 @@ describe('Auth API (e2e)', () => {
 
     it('should return 401 without token (scenario 10)', async () => {
       await request(app.getHttpServer()).get('/api/auth/me').expect(401);
+    });
+  });
+
+  // ── Soft-delete scenarios ──
+
+  describe('soft-delete handling', () => {
+    it('should return 401 for soft-deleted user login', async () => {
+      const softDeleteUser = {
+        email: 'e2e-soft-delete-login@example.com',
+        password: 'ValidPass123',
+        name: 'Soft Delete',
+        phone: '+59171234560',
+      };
+
+      // Register
+      await request(app.getHttpServer()).post('/api/auth/register').send(softDeleteUser).expect(201);
+
+      // Soft-delete via Prisma directly
+      await prisma.user.update({
+        where: { phone: softDeleteUser.phone },
+        data: { deletedAt: new Date() },
+      });
+
+      // Login attempt should fail
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ email: softDeleteUser.email, password: softDeleteUser.password })
+        .expect(401);
+
+      expect(res.body.message).toBeDefined();
+    });
+
+    it('should allow re-registration of soft-deleted email', async () => {
+      const reRegEmail = 'e2e-soft-delete-rereg@example.com';
+      const user = {
+        email: reRegEmail,
+        password: 'ValidPass123',
+        name: 'Original User',
+        phone: '+59171234561',
+      };
+
+      // Register
+      const regRes = await request(app.getHttpServer()).post('/api/auth/register').send(user).expect(201);
+      const originalId = regRes.body.user.id;
+
+      // Soft-delete via Prisma directly
+      await prisma.user.update({
+        where: { phone: user.phone },
+        data: { deletedAt: new Date() },
+      });
+
+      // Re-register with same email — should succeed
+      const reRegRes = await request(app.getHttpServer())
+        .post('/api/auth/register')
+        .send(user)
+        .expect(201);
+
+      // Should be a new user record
+      expect(reRegRes.body.user.id).not.toBe(originalId);
+      expect(reRegRes.body.accessToken).toBeDefined();
     });
   });
 });
