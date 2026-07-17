@@ -4,7 +4,8 @@ import { User, type UserRole } from '../../domain/user.entity';
 import { Email } from '../../domain/email.value-object';
 import { Phone } from '../../domain/phone.value-object';
 import type { Email as EmailVO } from '../../domain/email.value-object';
-import { PrismaService } from './prisma/prisma.service';
+import type { Phone as PhoneVO } from '../../domain/phone.value-object';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class PrismaUserRepository implements UserRepository {
@@ -19,14 +20,14 @@ export class PrismaUserRepository implements UserRepository {
       where: { id: user.id },
       create: {
         id: user.id,
-        email: user.email.getValue(),
+        email: user.email?.getValue() ?? null,
         passwordHash: user.passwordHash,
         name: user.name,
         phone: user.phone.getValue(),
         roleId: role.id,
       },
       update: {
-        email: user.email.getValue(),
+        email: user.email?.getValue() ?? null,
         passwordHash: user.passwordHash,
         name: user.name,
         phone: user.phone.getValue(),
@@ -39,8 +40,17 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async findByEmail(email: EmailVO): Promise<User | null> {
-    const record = await this.prisma.user.findUnique({
-      where: { email: email.getValue() },
+    const record = await this.prisma.user.findFirst({
+      where: { email: email.getValue(), deletedAt: null },
+      include: { role: true },
+    });
+
+    return record ? this.toDomain(record) : null;
+  }
+
+  async findByPhone(phone: PhoneVO): Promise<User | null> {
+    const record = await this.prisma.user.findFirst({
+      where: { phone: phone.getValue(), deletedAt: null },
       include: { role: true },
     });
 
@@ -48,8 +58,8 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    const record = await this.prisma.user.findUnique({
-      where: { id },
+    const record = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
       include: { role: true },
     });
 
@@ -58,7 +68,7 @@ export class PrismaUserRepository implements UserRepository {
 
   private toDomain(record: {
     id: string;
-    email: string;
+    email: string | null;
     passwordHash: string;
     name: string;
     phone: string;
@@ -68,7 +78,7 @@ export class PrismaUserRepository implements UserRepository {
   }): User {
     return User.reconstitute({
       id: record.id,
-      email: Email.create(record.email),
+      email: record.email ? Email.create(record.email) : undefined,
       name: record.name,
       phone: Phone.create(record.phone),
       role: record.role.name as UserRole,

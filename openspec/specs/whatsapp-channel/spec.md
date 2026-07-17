@@ -1,0 +1,80 @@
+# WhatsApp Channel Specification
+
+## Purpose
+
+Specify the WhatsApp Business API integration: webhook lifecycle, message sending, template messages, and resilience against Meta API rate limits.
+
+## Requirements
+
+### Requirement: Webhook Verification
+
+The system MUST respond to Meta webhook verification challenges (`hub.mode`, `hub.verify_token`, `hub.challenge`) with HTTP 200 and the challenge value. A mismatched `verify_token` MUST return HTTP 403.
+
+#### Scenario: Successful verification
+
+- GIVEN a `GET` request with `hub.mode=subscribe`, `hub.verify_token=<configured_token>`, and `hub.challenge=12345`
+- WHEN the webhook endpoint receives it
+- THEN the response is HTTP 200 with body `12345`
+
+#### Scenario: Invalid verify token
+
+- GIVEN a `GET` request with `hub.verify_token=<wrong_token>`
+- WHEN the webhook endpoint receives it
+- THEN the response is HTTP 403
+
+### Requirement: Receive Incoming Message
+
+The system MUST parse WhatsApp Business API webhook `POST` payloads and extract sender phone, message text/timestamp, and message type (text, interactive, image). Malformed payloads MUST be acknowledged with HTTP 200 to prevent Meta retries.
+
+#### Scenario: Valid text message received
+
+- GIVEN a valid webhook payload with `messages[0].text.body`
+- WHEN `POST /api/whatsapp/webhook` receives it
+- THEN the message is extracted and forwarded to the chatbot router
+- AND the webhook responds HTTP 200
+
+#### Scenario: Malformed payload
+
+- GIVEN a webhook payload missing required fields
+- WHEN `POST /api/whatsapp/webhook` receives it
+- THEN the endpoint responds HTTP 200 (acknowledge, no processing)
+
+### Requirement: Send Message
+
+The system MUST send text messages to WhatsApp users via the Meta Business API (`POST /v22.0/<phone_id>/messages`). The request MUST include `messaging_product=whatsapp`, `to`, `type`, and `text`. Non-200 responses from Meta MUST trigger a retry.
+
+#### Scenario: Message sent successfully
+
+- GIVEN a valid recipient phone and message text
+- WHEN the system sends a message
+- THEN Meta API returns success
+- AND the message is logged with status `sent`
+
+#### Scenario: Meta API error triggers retry
+
+- GIVEN Meta API returns HTTP 500 or timeout
+- WHEN the system sends a message
+- THEN it retries up to 3 times with exponential backoff (1s, 2s, 4s)
+- AND after exhausting retries, the message is logged with status `failed`
+
+### Requirement: Template Messages
+
+The system MAY send pre-approved WhatsApp template messages for onboarding confirmations. Templates MUST be referenced by name and language. The system MUST NOT send templates that have not been approved by Meta.
+
+#### Scenario: Template sent successfully
+
+- GIVEN an approved template named `welcome_onboarding` in `es`
+- WHEN the system sends it to a new contact
+- THEN Meta API accepts the request
+- AND the message is logged with template name and status `sent`
+
+### Requirement: Rate Limiting
+
+The system MUST throttle outbound messages per contact: max 1 message per second and max 250 messages per 24 hours per phone number (Meta Business API limits). Exceeding the limit MUST queue the message for delayed delivery.
+
+#### Scenario: Rate limit hit
+
+- GIVEN a contact has reached the per-second rate limit
+- WHEN the system tries to send another message
+- THEN the message is queued with a 1-second delay
+- AND it is delivered once the rate window resets

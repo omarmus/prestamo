@@ -7,7 +7,7 @@ export type UserRole = 'USER' | 'ADMIN';
 
 export interface UserProps {
   id?: string;
-  email: Email;
+  email?: Email;
   name: string;
   phone: Phone;
   role?: UserRole;
@@ -16,7 +16,7 @@ export interface UserProps {
 
 export class User {
   private readonly _id: string;
-  private readonly _email: Email;
+  private readonly _email: Email | null;
   private _name: string;
   private readonly _phone: Phone;
   private readonly _role: UserRole;
@@ -29,7 +29,7 @@ export class User {
     timestamps?: { createdAt: Date; updatedAt: Date },
   ) {
     this._id = props.id ?? randomUUID();
-    this._email = props.email;
+    this._email = props.email ?? null;
     this._name = props.name;
     this._phone = props.phone;
     this._role = props.role ?? 'USER';
@@ -70,7 +70,7 @@ export class User {
   toProfile(): UserProfile {
     return {
       id: this._id,
-      email: this._email.getValue(),
+      email: this._email?.getValue() ?? '',
       name: this._name,
       phone: this._phone.getValue(),
       role: this._role as Role,
@@ -84,7 +84,7 @@ export class User {
     return this._id;
   }
 
-  get email(): Email {
+  get email(): Email | null {
     return this._email;
   }
 

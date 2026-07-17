@@ -18,31 +18,41 @@ export class RegisterHandler {
   ) {}
 
   async execute(command: RegisterCommand): Promise<TokenResponse> {
-    // 1. Validate email and phone via Value Objects
-    const email = Email.create(command.email);
+    // 1. Validate phone via Value Object
     const phone = Phone.create(command.phone);
 
-    // 2. Check if email already exists
-    const existing = await this.userRepository.findByEmail(email);
-    if (existing) {
-      throw new UserAlreadyExistsError(command.email);
+    // 2. Check if phone already exists
+    const existingByPhone = await this.userRepository.findByPhone(phone);
+    if (existingByPhone) {
+      throw new UserAlreadyExistsError(command.phone);
     }
 
-    // 3. Hash password with argon2id
+    // 3. Validate email if provided
+    let email: Email | null = null;
+    if (command.email) {
+      email = Email.create(command.email);
+
+      const existingByEmail = await this.userRepository.findByEmail(email);
+      if (existingByEmail) {
+        throw new UserAlreadyExistsError(command.email);
+      }
+    }
+
+    // 4. Hash password with argon2id
     const passwordHash = await this.passwordHasher.hash(command.password);
 
-    // 4. Create User entity
+    // 5. Create User entity
     const user = User.create({
-      email,
+      email: email ?? undefined,
       name: command.name,
       phone,
       passwordHash,
     });
 
-    // 5. Persist
+    // 6. Persist
     await this.userRepository.save(user);
 
-    // 6. Generate tokens
+    // 7. Generate tokens
     const { accessToken } = await this.jwtService.sign({
       sub: user.id,
       role: user.role,

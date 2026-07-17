@@ -29,6 +29,7 @@ describe('LoginHandler', () => {
     mockUserRepo = {
       save: jest.fn(),
       findByEmail: jest.fn(),
+      findByPhone: jest.fn(),
       findById: jest.fn(),
     };
 

@@ -38,3 +38,24 @@
 
 ### Reglas Mandatory
 - **AGENTS.md**: sección mandatory rules con DDD Clean Architecture, shadcn/ui único, CodeGraph sync, OKF wiki updates.
+
+## 2026-07-17
+
+### Data Models + MVP Roadmap
+- **data-models.md**: extraídas todas las secciones Modelo de Datos de DAD 01-49 (48 secciones, 6,460 líneas)
+- **roadmap.md**: MVP roadmap reestructurado con el Customer Portal como eje central del flujo
+- **tables-mvp.md**: listado completo de 30 tablas MVP con referencias cruzadas al DAD y al portal
+- **index.md**: actualizado con links a roadmap, tables-mvp y data-models
+
+### WhatsApp como canal primario de adquisición
+- **roadmap.md**: WhatsApp movido de Fase 7 a Fase 2 — es el canal de adquisición PRIMARIO del MVP
+- **tables-mvp.md**: fases reordenadas: WhatsApp (F2) → Portal Core (F3) → Solicitud (F4) → Préstamos (F5) → Documentos (F6) → Admin (F7)
+- Flujo completo documentado: Landing → WhatsApp Bot → Registro/Solicitud → Portal → Gestión
+
+## 2026-07-17
+
+### Data Models + MVP Roadmap
+- **data-models.md**: extraídas todas las secciones Modelo de Datos de DAD 01-49 (48 secciones, 6,460 líneas)
+- **roadmap.md**: MVP roadmap actualizado con 6 fases, basado en DAD-50 y estado actual del proyecto
+- **tables-mvp.md**: listado completo de las 28 tablas MVP con referencia al DAD de origen y estado de implementación
+- **index.md**: actualizado con links a roadmap, tables-mvp y data-models

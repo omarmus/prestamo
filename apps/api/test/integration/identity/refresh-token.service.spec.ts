@@ -4,7 +4,8 @@ import { Redis } from 'ioredis';
 
 import { RefreshTokenServiceImpl } from '../../../src/identity/infrastructure/auth/refresh-token.service';
 import { REDIS_CLIENT } from '../../../src/identity/infrastructure/redis.provider';
-import { PrismaService } from '../../../src/identity/infrastructure/persistence/prisma/prisma.service';
+import { SharedModule } from '../../../src/shared/shared.module';
+import { PrismaService } from '../../../src/shared/prisma/prisma.service';
 import { REFRESH_TOKEN_SERVICE } from '../../../src/identity/identity.tokens';
 
 /**
@@ -30,9 +31,9 @@ describe('RefreshTokenService (integration)', () => {
         ConfigModule.forRoot({
           envFilePath: '../../.env',
         }),
+        SharedModule,
       ],
       providers: [
-        PrismaService,
         {
           provide: REDIS_CLIENT,
           useFactory: () => new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379'),
