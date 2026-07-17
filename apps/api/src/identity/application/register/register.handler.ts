@@ -7,6 +7,8 @@ import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists.
 import type { PasswordHasher } from '../ports/password-hasher.port';
 import type { JwtService } from '../ports/jwt-service.port';
 import type { RefreshTokenService } from '../ports/refresh-token-service.port';
+import type { CustomerCreatorPort } from '../../../customers/application/ports/customer-creator.port';
+import { Customer } from '../../../customers/domain/customer.entity';
 import { RegisterCommand } from './register.command';
 
 export class RegisterHandler {
@@ -15,6 +17,7 @@ export class RegisterHandler {
     private readonly passwordHasher: PasswordHasher,
     private readonly jwtService: JwtService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly customerCreator: CustomerCreatorPort,
   ) {}
 
   async execute(command: RegisterCommand): Promise<TokenResponse> {
@@ -49,10 +52,14 @@ export class RegisterHandler {
       passwordHash,
     });
 
-    // 6. Persist
+    // 6. Persist User
     await this.userRepository.save(user);
 
-    // 7. Generate tokens
+    // 7. Create Customer record for the new user
+    const customer = Customer.createFromUser(user);
+    await this.customerCreator.create(customer);
+
+    // 8. Generate tokens
     const { accessToken } = await this.jwtService.sign({
       sub: user.id,
       role: user.role,

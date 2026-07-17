@@ -13,6 +13,8 @@ import { CONTACT_REPOSITORY } from '../whatsapp.tokens';
 import type { PasswordHasher } from '../../identity/application/ports/password-hasher.port';
 import type { JwtService } from '../../identity/application/ports/jwt-service.port';
 import type { RefreshTokenService } from '../../identity/application/ports/refresh-token-service.port';
+import type { CustomerCreatorPort } from '../../customers/application/ports/customer-creator.port';
+import { CUSTOMER_CREATOR } from '../../customers/customers.tokens';
 import { ChatbotSession } from '../domain/chatbot-session.entity';
 
 export class CompleteRegistrationHandler {
@@ -23,6 +25,7 @@ export class CompleteRegistrationHandler {
     @Inject(PASSWORD_HASHER) passwordHasher: PasswordHasher,
     @Inject(JWT_SERVICE) jwtService: JwtService,
     @Inject(REFRESH_TOKEN_SERVICE) refreshTokenService: RefreshTokenService,
+    @Inject(CUSTOMER_CREATOR) customerCreator: CustomerCreatorPort,
     @Inject(CONTACT_REPOSITORY) private readonly contactRepo: ContactRepository,
   ) {
     this.registerHandler = new RegisterHandler(
@@ -30,6 +33,7 @@ export class CompleteRegistrationHandler {
       passwordHasher,
       jwtService,
       refreshTokenService,
+      customerCreator,
     );
   }
 

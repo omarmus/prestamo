@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
@@ -10,6 +10,10 @@ import { PasswordHasherService } from './infrastructure/auth/password-hasher.ser
 import { JwtStrategy } from './infrastructure/auth/jwt.strategy';
 import { redisProvider, REDIS_CLIENT } from './infrastructure/redis.provider';
 import { AuthController } from './presentation/auth.controller';
+import { CustomersModule } from '../customers/customers.module';
+import {
+  CUSTOMER_CREATOR,
+} from '../customers/customers.tokens';
 import {
   USER_REPOSITORY,
   PASSWORD_HASHER,
@@ -19,6 +23,7 @@ import {
 
 @Module({
   imports: [
+    forwardRef(() => CustomersModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({

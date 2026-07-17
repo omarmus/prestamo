@@ -32,6 +32,8 @@ import {
   JWT_SERVICE,
   REFRESH_TOKEN_SERVICE,
 } from '../identity.tokens';
+import { CUSTOMER_CREATOR } from '../../customers/customers.tokens';
+import type { CustomerCreatorPort } from '../../customers/application/ports/customer-creator.port';
 
 @Controller('api/auth')
 export class AuthController {
@@ -40,6 +42,7 @@ export class AuthController {
     @Inject(PASSWORD_HASHER) private readonly passwordHasher: PasswordHasher,
     @Inject(JWT_SERVICE) private readonly jwtService: JwtService,
     @Inject(REFRESH_TOKEN_SERVICE) private readonly refreshTokenService: RefreshTokenService,
+    @Inject(CUSTOMER_CREATOR) private readonly customerCreator: CustomerCreatorPort,
   ) {}
 
   @Post('register')
@@ -50,6 +53,7 @@ export class AuthController {
       this.passwordHasher,
       this.jwtService,
       this.refreshTokenService,
+      this.customerCreator,
     );
     return handler.execute(new RegisterCommand(dto.email, dto.password, dto.name, dto.phone));
   }

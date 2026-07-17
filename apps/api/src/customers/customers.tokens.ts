@@ -1,0 +1,2 @@
+export const CUSTOMER_REPOSITORY = Symbol('CUSTOMER_REPOSITORY');
+export const CUSTOMER_CREATOR = Symbol('CUSTOMER_CREATOR');

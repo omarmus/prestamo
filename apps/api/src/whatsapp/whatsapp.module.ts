@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
+import { CustomersModule } from '../customers/customers.module';
 import { WebhookController } from './presentation/webhook.controller';
 import { MetaHttpService } from './infrastructure/meta-http.service';
 import { AIService } from './infrastructure/ai-http.service';
@@ -23,6 +24,7 @@ import {
 
 @Module({
   controllers: [WebhookController],
+  imports: [CustomersModule],
   providers: [
     { provide: META_HTTP_SERVICE, useClass: MetaHttpService },
     { provide: AI_SERVICE, useClass: AIService },

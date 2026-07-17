@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { IdentityModule } from './identity/identity.module';
 import { SharedModule } from './shared/shared.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
+import { CustomersModule } from './customers/customers.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
     }),
     SharedModule,
     IdentityModule,
+    CustomersModule,
     WhatsAppModule,
   ],
 })

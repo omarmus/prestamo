@@ -55,6 +55,11 @@ model User {
   usersUpdatedBy  User[]  @relation("UserUpdatedBy")
   usersDeletedBy  User[]  @relation("UserDeletedBy")
 
+  customer              Customer?
+  customersCreatedBy    Customer[] @relation("CustomerCreatedBy")
+  customersUpdatedBy    Customer[] @relation("CustomerUpdatedBy")
+  customersDeletedBy    Customer[] @relation("CustomerDeletedBy")
+
   auditLogs              AuditLog[]
   configsUpdated         SystemConfiguration[]
   whatsappContacts       WhatsAppContact[]
@@ -72,6 +77,156 @@ model FailedLoginAttempt {
   createdById    String?
   updatedById    String?
   deletedById    String?
+}
+
+// --- Customer Portal Models (Fase 3) ---
+
+model Customer {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String?
+  documentType  String?
+  documentNumber String?
+  birthDate     DateTime?
+  gender        String?
+  maritalStatus String?
+  occupation    String?
+  monthlyIncome Decimal? @db.Decimal(18, 2)
+  status        String   @default("REGISTERED")
+  kycStatus     String   @default("NOT_STARTED")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organizationId String?
+  deletedAt      DateTime?
+  version        Int      @default(1)
+  createdById    String?
+  createdBy      User?    @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  updatedById    String?
+  updatedBy      User?    @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  deletedById    String?
+  deletedBy      User?    @relation("CustomerDeletedBy", fields: [deletedById], references: [id])
+
+  addresses    CustomerAddress[]
+  phones       CustomerPhone[]
+  emails       CustomerEmail[]
+  employment   CustomerEmployment?
+  incomes      CustomerIncome[]
+  bankAccounts CustomerBankAccount[]
+  documents    CustomerDocument[]
+  simulations  LoanSimulation[]
+  portalActions PortalAction[]
+}
+
+model CustomerAddress {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type       String?  // HOME | WORK | CORRESPONDENCE
+  country    String?
+  department String?
+  city       String?
+  zone       String?
+  street     String?
+  number     String?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CustomerPhone {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  phone      String
+  isWhatsApp Boolean  @default(false)
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CustomerEmail {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  email      String
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CustomerEmployment {
+  id               String   @id @default(uuid())
+  customerId       String   @unique
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  employer         String?
+  position         String?
+  employmentStatus String?  // EMPLOYEE | SELF_EMPLOYED | BUSINESS_OWNER | UNEMPLOYED
+  monthlySalary    Decimal? @db.Decimal(18, 2)
+  yearsWorking     Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model CustomerIncome {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  source     String?  // SALARY | BUSINESS | RENT | COMMISSION | PENSION | OTHER
+  amount     Decimal  @db.Decimal(18, 2)
+  frequency  String?  // MONTHLY | BIWEEKLY | WEEKLY | YEARLY
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CustomerBankAccount {
+  id            String   @id @default(uuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bank          String?
+  accountType   String?  // SAVINGS | CHECKING
+  accountNumber String?
+  holderName    String?
+  isPrimary     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CustomerDocument {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type       String   // CI_FRONT | CI_BACK | SELFIE | PAYSLIP | BANK_STATEMENT | SERVICE_BILL
+  fileName   String?
+  mimeType   String?
+  data       String?  // base64 encoded (ponytail: S3 post-MVP)
+  notes      String?
+  status     String   @default("PENDING") // PENDING | VERIFIED | REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model LoanSimulation {
+  id            String   @id @default(uuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount        Decimal  @db.Decimal(18, 2)
+  termMonths    Int
+  annualRate    Decimal  @db.Decimal(10, 6)
+  monthlyPayment Decimal? @db.Decimal(18, 2)
+  schedule      Json?
+  createdAt     DateTime @default(now())
+}
+
+model PortalAction {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now())
 }
 
 model AuditLog {

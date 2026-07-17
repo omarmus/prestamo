@@ -8,6 +8,7 @@ import type { RefreshTokenService } from '../ports/refresh-token-service.port';
 import { Email } from '../../domain/email.value-object';
 import { Phone } from '../../domain/phone.value-object';
 import { User } from '../../domain/user.entity';
+import type { CustomerCreatorPort } from '../../../customers/application/ports/customer-creator.port';
 
 function createMockUser() {
   return User.create({
@@ -24,6 +25,7 @@ describe('RegisterHandler', () => {
   let mockPasswordHasher: jest.Mocked<PasswordHasher>;
   let mockJwtService: jest.Mocked<JwtService>;
   let mockRefreshTokenService: jest.Mocked<RefreshTokenService>;
+  let mockCustomerCreator: jest.Mocked<CustomerCreatorPort>;
 
   beforeEach(() => {
     mockUserRepo = {
@@ -49,11 +51,16 @@ describe('RegisterHandler', () => {
       revokeFamily: jest.fn(),
     };
 
+    mockCustomerCreator = {
+      create: jest.fn().mockResolvedValue(undefined),
+    };
+
     handler = new RegisterHandler(
       mockUserRepo,
       mockPasswordHasher,
       mockJwtService,
       mockRefreshTokenService,
+      mockCustomerCreator,
     );
   });
 
