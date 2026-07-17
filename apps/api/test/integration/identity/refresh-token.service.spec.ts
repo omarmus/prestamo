@@ -5,7 +5,7 @@ import { Redis } from 'ioredis';
 import { RefreshTokenServiceImpl } from '../../../src/identity/infrastructure/auth/refresh-token.service';
 import { REDIS_CLIENT } from '../../../src/identity/infrastructure/redis.provider';
 import { PrismaService } from '../../../src/identity/infrastructure/persistence/prisma/prisma.service';
-import { REFRESH_TOKEN_SERVICE } from '../../../src/identity/identity.module';
+import { REFRESH_TOKEN_SERVICE } from '../../../src/identity/identity.tokens';
 
 /**
  * Integration tests for RefreshTokenService.

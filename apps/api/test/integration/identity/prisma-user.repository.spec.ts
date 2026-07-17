@@ -7,7 +7,7 @@ import { PrismaUserRepository } from '../../../src/identity/infrastructure/persi
 import { User } from '../../../src/identity/domain/user.entity';
 import { Email } from '../../../src/identity/domain/email.value-object';
 import { Phone } from '../../../src/identity/domain/phone.value-object';
-import { USER_REPOSITORY } from '../../../src/identity/identity.module';
+import { USER_REPOSITORY } from '../../../src/identity/identity.tokens';
 
 /**
  * Integration tests for PrismaUserRepository.

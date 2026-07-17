@@ -13,9 +13,11 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
       transform: true,
+      // ponytail: DTOs are plain classes without class-validator decorators.
+      // Real validation happens via domain Value Objects in the handlers.
+      // whitelist/forbidNonWhitelisted would strip all properties since none
+      // are decorated. Just transform from plain to class instance.
     }),
   );
 

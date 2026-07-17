@@ -2,6 +2,17 @@
 
 ## 2026-07-16
 
+### Phase 1 — Auth Frontend
+- **AuthProvider**: contexto React con user state, tokens en localStorage, refresh automático
+- **API Client**: fetch wrapper con inyección de JWT, refresh en 401, sin dependencias externas
+- **LoginForm**: email + password, validación Zod, shadcn/ui components, story en Storybook
+- **RegisterForm**: nombre + email + teléfono + contraseña, validación Zod, story
+- **Páginas**: /login y /register con redirect post-autenticación
+- **Auth guard**: home page redirige a /login si no hay sesión
+- **Proxy API**: Next.js rewrites /api/* → localhost:3001/api/*
+
+## 2026-07-16
+
 ### Creación Inicial
 - **OKF bundle** inicial con arquitectura, módulos, dominio y decisiones.
 - **Proyecto greenfield** — Phase 0 scaffold completado.

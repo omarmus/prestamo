@@ -11,13 +11,12 @@ import { PasswordHasherService } from './infrastructure/auth/password-hasher.ser
 import { JwtStrategy } from './infrastructure/auth/jwt.strategy';
 import { redisProvider } from './infrastructure/redis.provider';
 import { AuthController } from './presentation/auth.controller';
-
-// Injection tokens for port interfaces (interfaces don't exist at runtime,
-// so we use string tokens for NestJS DI resolution).
-export const USER_REPOSITORY = 'UserRepository';
-export const PASSWORD_HASHER = 'PasswordHasher';
-export const JWT_SERVICE = 'JwtService';
-export const REFRESH_TOKEN_SERVICE = 'RefreshTokenService';
+import {
+  USER_REPOSITORY,
+  PASSWORD_HASHER,
+  JWT_SERVICE,
+  REFRESH_TOKEN_SERVICE,
+} from './identity.tokens';
 
 @Module({
   imports: [

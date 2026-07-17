@@ -31,7 +31,7 @@ import {
   PASSWORD_HASHER,
   JWT_SERVICE,
   REFRESH_TOKEN_SERVICE,
-} from '../identity.module';
+} from '../identity.tokens';
 
 @Controller('api/auth')
 export class AuthController {
