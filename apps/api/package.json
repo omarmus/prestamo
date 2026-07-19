@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nest start --watch",
+    "dev": "tsx watch src/main.ts",
     "build": "nest build",
     "start": "nest start",
     "start:prod": "node dist/main",
@@ -33,6 +33,7 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "class-transformer": "^0.5.1",
+    "zod": "^3.25.0",
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
     "ioredis": "^5.0.0",

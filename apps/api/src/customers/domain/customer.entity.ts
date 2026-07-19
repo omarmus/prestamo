@@ -98,6 +98,21 @@ export class Customer {
   get documentNumber(): string | null {
     return this._documentNumber;
   }
+  get birthDate(): Date | null {
+    return this._birthDate;
+  }
+  get gender(): string | null {
+    return this._gender;
+  }
+  get maritalStatus(): string | null {
+    return this._maritalStatus;
+  }
+  get occupation(): string | null {
+    return this._occupation;
+  }
+  get monthlyIncome(): number | null {
+    return this._monthlyIncome;
+  }
   get status(): string {
     return this._status;
   }

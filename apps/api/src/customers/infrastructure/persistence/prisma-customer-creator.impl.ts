@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { CustomerCreatorPort } from '../../application/ports/customer-creator.port';
 import type { Customer } from '../../domain/customer.entity';
 import type { CustomerRepository } from '../../domain/customer.repository';
+import { CUSTOMER_REPOSITORY } from '../../customers.tokens';
 import { CustomerAlreadyExistsError } from '../../domain/errors/customer-already-exists.error';
 
 @Injectable()
 export class PrismaCustomerCreator implements CustomerCreatorPort {
-  constructor(private readonly customerRepository: CustomerRepository) {}
+  constructor(
+    @Inject(CUSTOMER_REPOSITORY)
+    private readonly customerRepository: CustomerRepository,
+  ) {}
 
   async create(customer: Customer): Promise<void> {
     const existing = await this.customerRepository.findByUserId(customer.userId);

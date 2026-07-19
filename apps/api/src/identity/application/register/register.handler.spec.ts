@@ -89,6 +89,7 @@ describe('RegisterHandler', () => {
 
       expect(mockPasswordHasher.hash).toHaveBeenCalledWith('password123');
       expect(mockUserRepo.save).toHaveBeenCalled();
+      expect(mockCustomerCreator.create).toHaveBeenCalled();
     });
   });
 
