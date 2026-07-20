@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 const VALID_ACTIONS = ['CREATE', 'UPDATE', 'DELETE'] as const;
@@ -34,7 +34,7 @@ export interface PaginatedAuditLogs {
 
 @Injectable()
 export class AuditService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async record(params: AuditRecordParams): Promise<void> {
     if (!VALID_ACTIONS.includes(params.action as AuditAction)) {

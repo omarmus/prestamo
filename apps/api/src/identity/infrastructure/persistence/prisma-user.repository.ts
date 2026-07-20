@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { UserRepository } from '../../domain/user.repository';
 import { User, type UserRole } from '../../domain/user.entity';
 import { Email } from '../../domain/email.value-object';
@@ -9,7 +9,7 @@ import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class PrismaUserRepository implements UserRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async save(user: User): Promise<User> {
     const role = await this.prisma.role.findUniqueOrThrow({

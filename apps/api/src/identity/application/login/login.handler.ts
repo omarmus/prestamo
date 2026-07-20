@@ -23,7 +23,6 @@ export class LoginHandler {
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      // Generic 401 to prevent user enumeration
       throw new InvalidCredentialsError();
     }
 
@@ -31,9 +30,6 @@ export class LoginHandler {
     const isValid = await this.passwordHasher.verify(user.passwordHash, command.password);
 
     if (!isValid) {
-      // ponytail: failed attempt logging will be added when an IP-aware logger
-      // or middleware is available. For now the handler signals intent;
-      // infra layer should add structured logging.
       throw new InvalidCredentialsError();
     }
 

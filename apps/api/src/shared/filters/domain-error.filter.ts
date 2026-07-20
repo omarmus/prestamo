@@ -14,6 +14,7 @@ export class DomainErrorFilter implements ExceptionFilter {
     const status = (exception as unknown as { statusCode?: number }).statusCode ?? HttpStatus.INTERNAL_SERVER_ERROR;
     const message = exception.message || 'Internal server error';
 
+    console.error('[DomainErrorFilter]', exception);
     response.status(status).json({
       statusCode: status,
       message,

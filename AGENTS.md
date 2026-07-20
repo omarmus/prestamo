@@ -119,3 +119,18 @@ These rules are NOT optional. Every agent working on this project MUST follow th
 - Después de implementar nuevos endpoints REST, probarlos con `curl` antes de hacer commit.
 - Incluir en la prueba: status code, estructura de respuesta, y un caso de error.
 - Documentar los curls en el PR description o en `docs/okf/` si el endpoint es parte de una API pública.
+
+### 6. `@Inject()` explícito en todos los constructores de NestJS
+- **Siempre** usar `@Inject(Token)` en CADA parámetro del constructor de cualquier provider, service, repository, handler o controller de NestJS. Nunca confiar en la inyección implícita por tipo.
+- **Por qué**: `tsx` (esbuild) no emite `design:paramtypes`, el metadata que NestJS necesita para resolver dependencias sin `@Inject()`. Sin el decorador explícito, el parámetro se resuelve como `undefined` en desarrollo con `tsx watch`.
+- Ejemplo correcto:
+  ```ts
+  @Injectable()
+  export class MiService {
+    constructor(
+      @Inject(PrismaService) private readonly prisma: PrismaService,
+      @Inject(JwtService) private readonly jwt: JwtService,
+    ) {}
+  }
+  ```
+- Funciona con cualquier transpilador (`tsx`, `tsc`, `swc`) porque `@Inject()` es metadata explícita, no depende de reflexión de TypeScript.

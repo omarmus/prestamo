@@ -42,11 +42,13 @@ export class WebhookController {
     @Inject(CONVERSATION_REPOSITORY)
     private readonly conversationRepo: ConversationRepository,
     @Inject(MESSAGE_REPOSITORY) private readonly messageRepo: MessageRepository,
+    @Inject(CompleteRegistrationHandler)
     private readonly completeRegistration: CompleteRegistrationHandler,
+    @Inject(ApplyLoanHandler)
     private readonly applyLoan: ApplyLoanHandler,
     @Inject(LOAN_APPLICATION_REPOSITORY)
     private readonly loanRepo: LoanApplicationRepository,
-    private readonly configService: ConfigService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
   ) {}
 
   private getRouteIntent(): RouteIntentHandler {

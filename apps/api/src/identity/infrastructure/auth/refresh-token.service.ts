@@ -11,7 +11,7 @@ export class RefreshTokenServiceImpl implements RefreshTokenService {
 
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    private readonly prisma: PrismaService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
   ) {}
 
   async generate(userId: string): Promise<string> {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigurationNotFoundError } from './configuration-not-found.error';
 
@@ -7,7 +7,7 @@ export class ConfigurationService {
   private cache = new Map<string, { value: unknown; expiresAt: number }>();
   private readonly defaultTtlMs = 60_000; // 1 minute
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async get<T = unknown>(key: string, defaultValue?: T): Promise<T> {
     // Check cache first

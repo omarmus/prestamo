@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { MetaHttpPort } from '../application/ports/meta-http.port';
 
@@ -8,9 +8,11 @@ export class MetaHttpService implements MetaHttpPort {
   private readonly phoneId: string;
   private readonly token: string;
 
-  constructor(configService: ConfigService) {
-    this.phoneId = configService.getOrThrow<string>('WHATSAPP_PHONE_ID');
-    this.token = configService.getOrThrow<string>('WHATSAPP_TOKEN');
+  constructor(
+    @Inject(ConfigService) private readonly configService: ConfigService,
+  ) {
+    this.phoneId = this.configService.getOrThrow<string>('WHATSAPP_PHONE_ID');
+    this.token = this.configService.getOrThrow<string>('WHATSAPP_TOKEN');
   }
 
   async sendMessage(to: string, text: string): Promise<{ metaId: string }> {

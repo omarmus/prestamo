@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { UserRepository } from '../../identity/domain/user.repository';
 import type { ContactRepository } from '../domain/contact-repository.port';
 import { RegisterCommand } from '../../identity/application/register/register.command';
@@ -17,6 +17,7 @@ import type { CustomerCreatorPort } from '../../customers/application/ports/cust
 import { CUSTOMER_CREATOR } from '../../customers/customers.tokens';
 import { ChatbotSession } from '../domain/chatbot-session.entity';
 
+@Injectable()
 export class CompleteRegistrationHandler {
   private readonly registerHandler: RegisterHandler;
 

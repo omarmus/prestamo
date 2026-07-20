@@ -12,13 +12,13 @@ export class AIService implements AIServicePort {
 
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    configService: ConfigService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
   ) {
     this.apiUrl =
-      configService.get<string>('AI_API_URL') ??
+      this.configService.get<string>('AI_API_URL') ??
       'https://api.openai.com/v1/chat/completions';
-    this.apiKey = configService.getOrThrow<string>('AI_API_KEY');
-    this.model = configService.get<string>('AI_MODEL') ?? 'gpt-4o-mini';
+    this.apiKey = this.configService.getOrThrow<string>('AI_API_KEY');
+    this.model = this.configService.get<string>('AI_MODEL') ?? 'gpt-4o-mini';
   }
 
   async classifyIntent(
