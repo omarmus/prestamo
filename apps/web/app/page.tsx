@@ -1,29 +1,19 @@
-'use client';
+import { LandingHeader } from '@/features/landing/components/landing-header';
+import { LandingHero } from '@/features/landing/components/landing-hero';
+import { LandingFeatures } from '@/features/landing/components/landing-features';
+import { PublicSimulatorSection } from '@/features/landing/components/public-simulator-section';
+import { LandingFooter } from '@/features/landing/components/landing-footer';
 
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { useAuth } from '../features/auth/hooks/use-auth';
-import { HomePageClient } from './home-page-client';
-
-export default function Home() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Cargando...</p>
+export default function LandingPage() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <LandingHeader />
+      <main className="flex-1">
+        <LandingHero />
+        <LandingFeatures />
+        <PublicSimulatorSection />
       </main>
-    );
-  }
-
-  if (!isAuthenticated) return null;
-
-  return <HomePageClient />;
+      <LandingFooter />
+    </div>
+  );
 }

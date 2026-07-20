@@ -4,6 +4,7 @@ import { IdentityModule } from './identity/identity.module';
 import { SharedModule } from './shared/shared.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { CustomersModule } from './customers/customers.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CustomersModule } from './customers/customers.module';
     IdentityModule,
     CustomersModule,
     WhatsAppModule,
+    PublicModule,
   ],
 })
 export class AppModule {}
