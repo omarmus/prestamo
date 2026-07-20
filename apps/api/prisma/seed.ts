@@ -4,11 +4,7 @@ import pg from 'pg';
 import { hash } from '@node-rs/argon2';
 
 const pool = new pg.Pool({
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-  password: 'postgres',
-  database: 'prestamos',
+  connectionString: process.env['DATABASE_URL'],
 });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
