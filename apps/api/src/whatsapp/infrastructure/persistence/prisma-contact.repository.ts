@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { WhatsAppContact } from '../../domain/whatsapp-contact.entity';
 import type { ContactRepository } from '../../domain/contact-repository.port';
 
 @Injectable()
 export class PrismaContactRepository implements ContactRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async save(contact: WhatsAppContact): Promise<WhatsAppContact> {
     const record = await this.prisma.whatsAppContact.upsert({

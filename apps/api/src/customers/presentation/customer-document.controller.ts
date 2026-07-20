@@ -1,84 +1,36 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  UseGuards,
-  Inject,
-  NotFoundException,
-  HttpCode,
-} from '@nestjs/common';
+import {Inject, Controller, Get, Post, Body, UseGuards, HttpCode} from '@nestjs/common';
+import type { CreateDocumentInput } from '@prestamos/shared';
 import { CreateDocumentSchema } from '@prestamos/shared';
 
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipes/zod-validation.pipe';
-import { CUSTOMER_REPOSITORY } from '../customers.tokens';
-import type { CustomerRepository } from '../domain/customer.repository';
-import { PrismaService } from '../../shared/prisma/prisma.service';
 import type { JwtPayload } from '@prestamos/shared';
 
-// ponytail: document upload as base64 in DB — S3 post-MVP
+import { ListDocumentsHandler } from '../application/document/list-documents.handler';
+import { UploadDocumentHandler } from '../application/document/upload-document.handler';
 
 @Controller('api/customers/me/documents')
 @UseGuards(JwtAuthGuard)
 export class CustomerDocumentController {
   constructor(
-    @Inject(CUSTOMER_REPOSITORY)
-    private readonly customerRepository: CustomerRepository,
-    private readonly prisma: PrismaService,
+    @Inject(ListDocumentsHandler)
+    private readonly listDocumentsHandler: ListDocumentsHandler,
+    @Inject(UploadDocumentHandler)
+    private readonly uploadDocumentHandler: UploadDocumentHandler,
   ) {}
 
   @Get()
-  async listDocuments(@CurrentUser() user: JwtPayload) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-
-    const documents = await this.prisma.customerDocument.findMany({
-      where: { customerId: customer.id },
-      select: {
-        id: true,
-        type: true,
-        fileName: true,
-        mimeType: true,
-        notes: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        // ponytail: data (base64) excluded from list — fetch single doc for content
-      },
-    });
-    return documents;
+  listDocuments(@CurrentUser() user: JwtPayload) {
+    return this.listDocumentsHandler.execute(user.sub);
   }
 
   @Post()
   @HttpCode(201)
-  async uploadDocument(
+  uploadDocument(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(CreateDocumentSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(CreateDocumentSchema)) body: CreateDocumentInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-
-    return this.prisma.customerDocument.create({
-      data: {
-        customerId: customer.id,
-        type: body.type as string,
-        fileName: (body.fileName as string) ?? null,
-        mimeType: (body.mimeType as string) ?? null,
-        data: body.data as string,
-        notes: (body.notes as string) ?? null,
-      },
-      select: {
-        id: true,
-        type: true,
-        fileName: true,
-        mimeType: true,
-        notes: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    return this.uploadDocumentHandler.execute(user.sub, body);
   }
 }

@@ -41,6 +41,11 @@ export default defineConfig({
           name: 'unit',
           include: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
           exclude: ['**/node_modules/**', '**/.next/**'],
+          environment: 'jsdom',
+          setupFiles: ['./vitest.setup.ts'],
+        },
+        resolve: {
+          alias: { '@': dirname },
         },
       },
     ],

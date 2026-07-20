@@ -1,5 +1,4 @@
-import {
-  Controller,
+import {Inject, Controller,
   Get,
   Put,
   Post,
@@ -7,11 +6,24 @@ import {
   Body,
   Param,
   UseGuards,
-  Inject,
-  NotFoundException,
-  HttpCode,
-} from '@nestjs/common';
-import type { CustomerProfile, FullCustomerProfile } from '@prestamos/shared';
+  HttpCode,} from '@nestjs/common';
+import type {
+  CustomerProfile,
+  FullCustomerProfile,
+  UpdateCustomerInput,
+  CreateAddressInput,
+  UpdateAddressInput,
+  CreatePhoneInput,
+  UpdatePhoneInput,
+  CreateEmailInput,
+  UpdateEmailInput,
+  UpsertEmploymentInput,
+  CreateIncomeInput,
+  UpdateIncomeInput,
+  CreateBankAccountInput,
+  UpdateBankAccountInput,
+  CreatePortalActionInput,
+} from '@prestamos/shared';
 import {
   UpdateCustomerSchema,
   CreateAddressSchema,
@@ -25,516 +37,294 @@ import {
   UpdateIncomeSchema,
   CreateBankAccountSchema,
   UpdateBankAccountSchema,
+  CreatePortalActionSchema,
 } from '@prestamos/shared';
 
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipes/zod-validation.pipe';
-import { CUSTOMER_REPOSITORY } from '../customers.tokens';
-import type { CustomerRepository } from '../domain/customer.repository';
-import { Customer } from '../domain/customer.entity';
-import { PrismaService } from '../../shared/prisma/prisma.service';
 import type { JwtPayload } from '@prestamos/shared';
 
-// ponytail: single controller for all customer profile CRUD — PrismaService direct for sub-entities
+import { GetProfileHandler } from '../application/profile/get-profile.handler';
+import { UpdateProfileHandler } from '../application/profile/update-profile.handler';
+import { GetAddressesHandler } from '../application/address/get-addresses.handler';
+import { CreateAddressHandler } from '../application/address/create-address.handler';
+import { UpdateAddressHandler } from '../application/address/update-address.handler';
+import { DeleteAddressHandler } from '../application/address/delete-address.handler';
+import { GetPhonesHandler } from '../application/phone/get-phones.handler';
+import { CreatePhoneHandler } from '../application/phone/create-phone.handler';
+import { UpdatePhoneHandler } from '../application/phone/update-phone.handler';
+import { DeletePhoneHandler } from '../application/phone/delete-phone.handler';
+import { GetEmailsHandler } from '../application/email/get-emails.handler';
+import { CreateEmailHandler } from '../application/email/create-email.handler';
+import { UpdateEmailHandler } from '../application/email/update-email.handler';
+import { DeleteEmailHandler } from '../application/email/delete-email.handler';
+import { GetEmploymentHandler } from '../application/employment/get-employment.handler';
+import { UpsertEmploymentHandler } from '../application/employment/upsert-employment.handler';
+import { GetIncomesHandler } from '../application/income/get-incomes.handler';
+import { CreateIncomeHandler } from '../application/income/create-income.handler';
+import { UpdateIncomeHandler } from '../application/income/update-income.handler';
+import { DeleteIncomeHandler } from '../application/income/delete-income.handler';
+import { GetBankAccountsHandler } from '../application/bank-account/get-bank-accounts.handler';
+import { CreateBankAccountHandler } from '../application/bank-account/create-bank-account.handler';
+import { UpdateBankAccountHandler } from '../application/bank-account/update-bank-account.handler';
+import { DeleteBankAccountHandler } from '../application/bank-account/delete-bank-account.handler';
+import { TrackActionHandler } from '../application/portal-action/track-action.handler';
 
 @Controller('api/customers')
 @UseGuards(JwtAuthGuard)
 export class CustomerProfileController {
   constructor(
-    @Inject(CUSTOMER_REPOSITORY)
-    private readonly customerRepository: CustomerRepository,
-    private readonly prisma: PrismaService,
+    @Inject(GetProfileHandler)
+    private readonly getProfileHandler: GetProfileHandler,
+    @Inject(UpdateProfileHandler)
+    private readonly updateProfileHandler: UpdateProfileHandler,
+    @Inject(GetAddressesHandler)
+    private readonly getAddressesHandler: GetAddressesHandler,
+    @Inject(CreateAddressHandler)
+    private readonly createAddressHandler: CreateAddressHandler,
+    @Inject(UpdateAddressHandler)
+    private readonly updateAddressHandler: UpdateAddressHandler,
+    @Inject(DeleteAddressHandler)
+    private readonly deleteAddressHandler: DeleteAddressHandler,
+    @Inject(GetPhonesHandler)
+    private readonly getPhonesHandler: GetPhonesHandler,
+    @Inject(CreatePhoneHandler)
+    private readonly createPhoneHandler: CreatePhoneHandler,
+    @Inject(UpdatePhoneHandler)
+    private readonly updatePhoneHandler: UpdatePhoneHandler,
+    @Inject(DeletePhoneHandler)
+    private readonly deletePhoneHandler: DeletePhoneHandler,
+    @Inject(GetEmailsHandler)
+    private readonly getEmailsHandler: GetEmailsHandler,
+    @Inject(CreateEmailHandler)
+    private readonly createEmailHandler: CreateEmailHandler,
+    @Inject(UpdateEmailHandler)
+    private readonly updateEmailHandler: UpdateEmailHandler,
+    @Inject(DeleteEmailHandler)
+    private readonly deleteEmailHandler: DeleteEmailHandler,
+    @Inject(GetEmploymentHandler)
+    private readonly getEmploymentHandler: GetEmploymentHandler,
+    @Inject(UpsertEmploymentHandler)
+    private readonly upsertEmploymentHandler: UpsertEmploymentHandler,
+    @Inject(GetIncomesHandler)
+    private readonly getIncomesHandler: GetIncomesHandler,
+    @Inject(CreateIncomeHandler)
+    private readonly createIncomeHandler: CreateIncomeHandler,
+    @Inject(UpdateIncomeHandler)
+    private readonly updateIncomeHandler: UpdateIncomeHandler,
+    @Inject(DeleteIncomeHandler)
+    private readonly deleteIncomeHandler: DeleteIncomeHandler,
+    @Inject(GetBankAccountsHandler)
+    private readonly getBankAccountsHandler: GetBankAccountsHandler,
+    @Inject(CreateBankAccountHandler)
+    private readonly createBankAccountHandler: CreateBankAccountHandler,
+    @Inject(UpdateBankAccountHandler)
+    private readonly updateBankAccountHandler: UpdateBankAccountHandler,
+    @Inject(DeleteBankAccountHandler)
+    private readonly deleteBankAccountHandler: DeleteBankAccountHandler,
+    @Inject(TrackActionHandler)
+    private readonly trackActionHandler: TrackActionHandler,
   ) {}
 
   // --- Profile ---
 
   @Get('me')
-  async getProfile(@CurrentUser() user: JwtPayload): Promise<CustomerProfile> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.toProfile(customer);
+  getProfile(@CurrentUser() user: JwtPayload): Promise<CustomerProfile> {
+    return this.getProfileHandler.execute(user.sub);
   }
 
   @Put('me')
-  async updateProfile(
+  updateProfile(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(UpdateCustomerSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(UpdateCustomerSchema)) body: UpdateCustomerInput,
   ): Promise<CustomerProfile> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-
-    // Reconstituir con nuevos valores manteniendo los existentes
-    const updated = Customer.reconstitute({
-      id: customer.id,
-      userId: customer.userId,
-      firstName: (body.firstName as string) ?? customer.firstName,
-      lastName: body.lastName != null ? (body.lastName as string) : customer.lastName,
-      documentType: body.documentType != null ? (body.documentType as string) : customer.documentType,
-      documentNumber: body.documentNumber != null ? (body.documentNumber as string) : customer.documentNumber,
-      birthDate: body.birthDate != null ? new Date(body.birthDate as string) : null,
-      // ponytail: casteo simple, Zod ya validó tipos
-      gender: body.gender != null ? (body.gender as string) : null,
-      maritalStatus: body.maritalStatus != null ? (body.maritalStatus as string) : null,
-      occupation: body.occupation != null ? (body.occupation as string) : null,
-      monthlyIncome: body.monthlyIncome != null ? (body.monthlyIncome as number) : null,
-      status: customer.status,
-      kycStatus: customer.kycStatus,
-      createdAt: customer.createdAt,
-      updatedAt: new Date(),
-    });
-
-    await this.customerRepository.update(updated);
-    return this.toProfile(updated);
+    return this.updateProfileHandler.execute(user.sub, body);
   }
 
   @Get('me/full')
-  async getFullProfile(@CurrentUser() user: JwtPayload): Promise<FullCustomerProfile> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-
-    const [addresses, phones, emails, employment, incomes, bankAccounts, documents, simulations, portalActions] =
-      await Promise.all([
-        this.prisma.customerAddress.findMany({ where: { customerId: customer.id } }),
-        this.prisma.customerPhone.findMany({ where: { customerId: customer.id } }),
-        this.prisma.customerEmail.findMany({ where: { customerId: customer.id } }),
-        this.prisma.customerEmployment.findUnique({ where: { customerId: customer.id } }),
-        this.prisma.customerIncome.findMany({ where: { customerId: customer.id } }),
-        this.prisma.customerBankAccount.findMany({ where: { customerId: customer.id } }),
-        this.prisma.customerDocument.findMany({ where: { customerId: customer.id } }),
-        this.prisma.loanSimulation.findMany({ where: { customerId: customer.id } }),
-        this.prisma.portalAction.findMany({ where: { customerId: customer.id } }),
-      ]);
-
-    return {
-      ...this.toProfile(customer),
-      addresses: addresses.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() })),
-      phones: phones.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() })),
-      emails: emails.map((e) => ({ ...e, createdAt: e.createdAt.toISOString() })),
-      employment: employment
-        ? {
-            id: employment.id,
-            employer: employment.employer,
-            position: employment.position,
-            employmentStatus: employment.employmentStatus,
-            monthlySalary: employment.monthlySalary ? Number(employment.monthlySalary) : null,
-            yearsWorking: employment.yearsWorking,
-            createdAt: employment.createdAt.toISOString(),
-          }
-        : null,
-      incomes: incomes.map((i) => ({
-        ...i,
-        amount: Number(i.amount),
-        createdAt: i.createdAt.toISOString(),
-      })),
-      bankAccounts: bankAccounts.map((b) => ({ ...b, createdAt: b.createdAt.toISOString() })),
-      documents: documents.map((d) => ({
-        id: d.id,
-        type: d.type,
-        fileName: d.fileName,
-        mimeType: d.mimeType,
-        notes: d.notes,
-        status: d.status,
-        createdAt: d.createdAt.toISOString(),
-      })),
-      simulations: simulations.map((s) => ({
-        id: s.id,
-        amount: Number(s.amount),
-        termMonths: s.termMonths,
-        annualRate: Number(s.annualRate),
-        monthlyPayment: s.monthlyPayment ? Number(s.monthlyPayment) : null,
-        schedule: s.schedule,
-        createdAt: s.createdAt.toISOString(),
-      })),
-      portalActions: portalActions.map((a) => ({
-        ...a,
-        createdAt: a.createdAt.toISOString(),
-      })),
-    };
+  getFullProfile(@CurrentUser() user: JwtPayload): Promise<FullCustomerProfile> {
+    return this.getProfileHandler.executeFull(user.sub);
   }
 
   // --- Addresses ---
 
   @Get('me/addresses')
-  async getAddresses(@CurrentUser() user: JwtPayload) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerAddress.findMany({ where: { customerId: customer.id } });
+  getAddresses(@CurrentUser() user: JwtPayload) {
+    return this.getAddressesHandler.execute(user.sub);
   }
 
   @Post('me/addresses')
   @HttpCode(201)
-  async createAddress(
+  createAddress(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(CreateAddressSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(CreateAddressSchema)) body: CreateAddressInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerAddress.create({
-      data: {
-        customerId: customer.id,
-        type: (body.type as string) ?? null,
-        country: (body.country as string) ?? null,
-        department: (body.department as string) ?? null,
-        city: (body.city as string) ?? null,
-        zone: (body.zone as string) ?? null,
-        street: (body.street as string) ?? null,
-        number: (body.number as string) ?? null,
-        isPrimary: (body.isPrimary as boolean) ?? false,
-      },
-    });
+    return this.createAddressHandler.execute(user.sub, body);
   }
 
   @Put('me/addresses/:id')
-  async updateAddress(
+  updateAddress(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateAddressSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(UpdateAddressSchema)) body: UpdateAddressInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerAddress.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Address not found');
-
-    return this.prisma.customerAddress.update({
-      where: { id },
-      data: {
-        ...(body.type !== undefined && { type: body.type as string }),
-        ...(body.country !== undefined && { country: body.country as string }),
-        ...(body.department !== undefined && { department: body.department as string }),
-        ...(body.city !== undefined && { city: body.city as string }),
-        ...(body.zone !== undefined && { zone: body.zone as string }),
-        ...(body.street !== undefined && { street: body.street as string }),
-        ...(body.number !== undefined && { number: body.number as string }),
-        ...(body.isPrimary !== undefined && { isPrimary: body.isPrimary as boolean }),
-      },
-    });
+    return this.updateAddressHandler.execute(user.sub, id, body);
   }
 
   @Delete('me/addresses/:id')
   @HttpCode(204)
-  async deleteAddress(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerAddress.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Address not found');
-    await this.prisma.customerAddress.delete({ where: { id } });
+  deleteAddress(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
+    return this.deleteAddressHandler.execute(user.sub, id);
   }
 
   // --- Phones ---
 
   @Get('me/phones')
-  async getPhones(@CurrentUser() user: JwtPayload) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerPhone.findMany({ where: { customerId: customer.id } });
+  getPhones(@CurrentUser() user: JwtPayload) {
+    return this.getPhonesHandler.execute(user.sub);
   }
 
   @Post('me/phones')
   @HttpCode(201)
-  async createPhone(
+  createPhone(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(CreatePhoneSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(CreatePhoneSchema)) body: CreatePhoneInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerPhone.create({
-      data: {
-        customerId: customer.id,
-        phone: body.phone as string,
-        isWhatsApp: (body.isWhatsApp as boolean) ?? false,
-        isPrimary: (body.isPrimary as boolean) ?? false,
-      },
-    });
+    return this.createPhoneHandler.execute(user.sub, body);
   }
 
   @Put('me/phones/:id')
-  async updatePhone(
+  updatePhone(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdatePhoneSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(UpdatePhoneSchema)) body: UpdatePhoneInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerPhone.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Phone not found');
-
-    return this.prisma.customerPhone.update({
-      where: { id },
-      data: {
-        ...(body.phone !== undefined && { phone: body.phone as string }),
-        ...(body.isWhatsApp !== undefined && { isWhatsApp: body.isWhatsApp as boolean }),
-        ...(body.isPrimary !== undefined && { isPrimary: body.isPrimary as boolean }),
-      },
-    });
+    return this.updatePhoneHandler.execute(user.sub, id, body);
   }
 
   @Delete('me/phones/:id')
   @HttpCode(204)
-  async deletePhone(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerPhone.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Phone not found');
-    await this.prisma.customerPhone.delete({ where: { id } });
+  deletePhone(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
+    return this.deletePhoneHandler.execute(user.sub, id);
   }
 
   // --- Emails ---
 
   @Get('me/emails')
-  async getEmails(@CurrentUser() user: JwtPayload) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerEmail.findMany({ where: { customerId: customer.id } });
+  getEmails(@CurrentUser() user: JwtPayload) {
+    return this.getEmailsHandler.execute(user.sub);
   }
 
   @Post('me/emails')
   @HttpCode(201)
-  async createEmail(
+  createEmail(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(CreateEmailSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(CreateEmailSchema)) body: CreateEmailInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerEmail.create({
-      data: {
-        customerId: customer.id,
-        email: body.email as string,
-        isPrimary: (body.isPrimary as boolean) ?? false,
-      },
-    });
+    return this.createEmailHandler.execute(user.sub, body);
   }
 
   @Put('me/emails/:id')
-  async updateEmail(
+  updateEmail(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateEmailSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(UpdateEmailSchema)) body: UpdateEmailInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerEmail.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Email not found');
-
-    return this.prisma.customerEmail.update({
-      where: { id },
-      data: {
-        ...(body.email !== undefined && { email: body.email as string }),
-        ...(body.isPrimary !== undefined && { isPrimary: body.isPrimary as boolean }),
-      },
-    });
+    return this.updateEmailHandler.execute(user.sub, id, body);
   }
 
   @Delete('me/emails/:id')
   @HttpCode(204)
-  async deleteEmail(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerEmail.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Email not found');
-    await this.prisma.customerEmail.delete({ where: { id } });
+  deleteEmail(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
+    return this.deleteEmailHandler.execute(user.sub, id);
   }
 
   // --- Employment ---
 
   @Get('me/employment')
-  async getEmployment(@CurrentUser() user: JwtPayload) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const employment = await this.prisma.customerEmployment.findUnique({
-      where: { customerId: customer.id },
-    });
-    if (!employment) throw new NotFoundException('Employment not found');
-    return employment;
+  getEmployment(@CurrentUser() user: JwtPayload) {
+    return this.getEmploymentHandler.execute(user.sub);
   }
 
   @Put('me/employment')
-  async upsertEmployment(
+  upsertEmployment(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(UpsertEmploymentSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(UpsertEmploymentSchema)) body: UpsertEmploymentInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-
-    return this.prisma.customerEmployment.upsert({
-      where: { customerId: customer.id },
-      create: {
-        customerId: customer.id,
-        employer: (body.employer as string) ?? null,
-        position: (body.position as string) ?? null,
-        employmentStatus: (body.employmentStatus as string) ?? null,
-        monthlySalary: (body.monthlySalary as number) ?? null,
-        yearsWorking: (body.yearsWorking as number) ?? null,
-      },
-      update: {
-        ...(body.employer !== undefined && { employer: body.employer as string }),
-        ...(body.position !== undefined && { position: body.position as string }),
-        ...(body.employmentStatus !== undefined && { employmentStatus: body.employmentStatus as string }),
-        ...(body.monthlySalary !== undefined && { monthlySalary: body.monthlySalary as number }),
-        ...(body.yearsWorking !== undefined && { yearsWorking: body.yearsWorking as number }),
-      },
-    });
+    return this.upsertEmploymentHandler.execute(user.sub, body);
   }
 
   // --- Incomes ---
 
   @Get('me/incomes')
-  async getIncomes(@CurrentUser() user: JwtPayload) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerIncome.findMany({ where: { customerId: customer.id } });
+  getIncomes(@CurrentUser() user: JwtPayload) {
+    return this.getIncomesHandler.execute(user.sub);
   }
 
   @Post('me/incomes')
   @HttpCode(201)
-  async createIncome(
+  createIncome(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(CreateIncomeSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(CreateIncomeSchema)) body: CreateIncomeInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerIncome.create({
-      data: {
-        customerId: customer.id,
-        source: (body.source as string) ?? null,
-        amount: body.amount as number,
-        frequency: (body.frequency as string) ?? null,
-      },
-    });
+    return this.createIncomeHandler.execute(user.sub, body);
   }
 
   @Put('me/incomes/:id')
-  async updateIncome(
+  updateIncome(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateIncomeSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(UpdateIncomeSchema)) body: UpdateIncomeInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerIncome.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Income not found');
-
-    return this.prisma.customerIncome.update({
-      where: { id },
-      data: {
-        ...(body.source !== undefined && { source: body.source as string }),
-        ...(body.amount !== undefined && { amount: body.amount as number }),
-        ...(body.frequency !== undefined && { frequency: body.frequency as string }),
-      },
-    });
+    return this.updateIncomeHandler.execute(user.sub, id, body);
   }
 
   @Delete('me/incomes/:id')
   @HttpCode(204)
-  async deleteIncome(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerIncome.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Income not found');
-    await this.prisma.customerIncome.delete({ where: { id } });
+  deleteIncome(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
+    return this.deleteIncomeHandler.execute(user.sub, id);
   }
 
   // --- Bank Accounts ---
 
   @Get('me/bank-accounts')
-  async getBankAccounts(@CurrentUser() user: JwtPayload) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerBankAccount.findMany({ where: { customerId: customer.id } });
+  getBankAccounts(@CurrentUser() user: JwtPayload) {
+    return this.getBankAccountsHandler.execute(user.sub);
   }
 
   @Post('me/bank-accounts')
   @HttpCode(201)
-  async createBankAccount(
+  createBankAccount(
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(CreateBankAccountSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(CreateBankAccountSchema)) body: CreateBankAccountInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    return this.prisma.customerBankAccount.create({
-      data: {
-        customerId: customer.id,
-        bank: (body.bank as string) ?? null,
-        accountType: (body.accountType as string) ?? null,
-        accountNumber: (body.accountNumber as string) ?? null,
-        holderName: (body.holderName as string) ?? null,
-        isPrimary: (body.isPrimary as boolean) ?? false,
-      },
-    });
+    return this.createBankAccountHandler.execute(user.sub, body);
   }
 
   @Put('me/bank-accounts/:id')
-  async updateBankAccount(
+  updateBankAccount(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateBankAccountSchema)) body: Record<string, unknown>,
+    @Body(new ZodValidationPipe(UpdateBankAccountSchema)) body: UpdateBankAccountInput,
   ) {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerBankAccount.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Bank account not found');
-
-    return this.prisma.customerBankAccount.update({
-      where: { id },
-      data: {
-        ...(body.bank !== undefined && { bank: body.bank as string }),
-        ...(body.accountType !== undefined && { accountType: body.accountType as string }),
-        ...(body.accountNumber !== undefined && { accountNumber: body.accountNumber as string }),
-        ...(body.holderName !== undefined && { holderName: body.holderName as string }),
-        ...(body.isPrimary !== undefined && { isPrimary: body.isPrimary as boolean }),
-      },
-    });
+    return this.updateBankAccountHandler.execute(user.sub, id, body);
   }
 
   @Delete('me/bank-accounts/:id')
   @HttpCode(204)
-  async deleteBankAccount(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
-    const customer = await this.customerRepository.findByUserId(user.sub);
-    if (!customer) throw new NotFoundException('Customer not found');
-    const existing = await this.prisma.customerBankAccount.findFirst({
-      where: { id, customerId: customer.id },
-    });
-    if (!existing) throw new NotFoundException('Bank account not found');
-    await this.prisma.customerBankAccount.delete({ where: { id } });
+  deleteBankAccount(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
+    return this.deleteBankAccountHandler.execute(user.sub, id);
   }
 
-  // --- Helpers ---
+  // --- Portal Actions ---
 
-  private toProfile(customer: Customer): CustomerProfile {
-    return {
-      id: customer.id,
-      userId: customer.userId,
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      documentType: customer.documentType,
-      documentNumber: customer.documentNumber,
-      birthDate: customer.birthDate?.toISOString() ?? null,
-      gender: customer.gender,
-      maritalStatus: customer.maritalStatus,
-      occupation: customer.occupation,
-      monthlyIncome: customer.monthlyIncome,
-      status: customer.status,
-      kycStatus: customer.kycStatus,
-      createdAt: customer.createdAt.toISOString(),
-      updatedAt: customer.updatedAt.toISOString(),
-    };
+  @Post('me/actions')
+  @HttpCode(201)
+  trackAction(
+    @CurrentUser() user: JwtPayload,
+    @Body(new ZodValidationPipe(CreatePortalActionSchema)) body: CreatePortalActionInput,
+  ) {
+    return this.trackActionHandler.execute(user.sub, body);
   }
 }
