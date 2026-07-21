@@ -55,7 +55,7 @@ export class AuthController {
       this.refreshTokenService,
       this.customerCreator,
     );
-    return handler.execute(new RegisterCommand(dto.email, dto.password, dto.name, dto.phone));
+    return handler.execute(new RegisterCommand(dto.email, dto.password, dto.name, dto.phone, dto.role));
   }
 
   @Post('login')

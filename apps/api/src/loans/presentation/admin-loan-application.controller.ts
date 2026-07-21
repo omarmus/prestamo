@@ -30,7 +30,7 @@ import { ADMIN_QUERY } from '../application/ports/admin-query.port';
 import type { AdminQuery } from '../application/ports/admin-query.port';
 import { LoanNotFoundError } from '../domain/loan-application.errors';
 
-@Controller('api/admin/loans/applications')
+@Controller('api/admin/loans')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminLoanApplicationController {
   constructor(

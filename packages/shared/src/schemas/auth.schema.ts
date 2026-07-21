@@ -5,6 +5,7 @@ export const RegisterSchema = z.object({
   password: z.string().min(8),
   name: z.string().min(2).max(100),
   phone: z.string().regex(/^\+591[67]\d{7}$/),
+  role: z.enum(['USER', 'ADMIN']).optional(),
 });
 
 export const LoginSchema = z.object({

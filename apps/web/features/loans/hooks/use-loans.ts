@@ -13,9 +13,9 @@ export function useLoans() {
     setIsLoading(true);
     try {
       setError(null);
-      const data = await api.get<LoanApplicationResponse[]>('/api/loans/applications');
-      setApplications(data);
-      return data;
+      const res = await api.get<{ data: LoanApplicationResponse[] }>('/api/loans/applications');
+      setApplications(res.data);
+      return res.data;
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Error al cargar solicitudes';
       setError(message);

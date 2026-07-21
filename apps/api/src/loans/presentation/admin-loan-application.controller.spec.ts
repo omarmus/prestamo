@@ -77,7 +77,7 @@ describe('AdminLoanApplicationController integration', () => {
     );
   });
 
-  describe('GET /api/admin/loans/applications — list pending', () => {
+  describe('GET /api/admin/loans — list pending', () => {
     it('returns paginated results with default PENDING+IN_REVIEW filter', async () => {
       const fakeRows = [
         {
@@ -111,7 +111,7 @@ describe('AdminLoanApplicationController integration', () => {
     });
   });
 
-  describe('GET /api/admin/loans/applications/:id — detail', () => {
+  describe('GET /api/admin/loans/:id — detail', () => {
     it('returns full application detail with customer data', async () => {
       mockPrisma.loanApplication.findUnique.mockResolvedValue({
         id: 'app-1', customerId: 'customer-1',
@@ -147,7 +147,7 @@ describe('AdminLoanApplicationController integration', () => {
     });
   });
 
-  describe('POST /api/admin/loans/applications/:id/review', () => {
+  describe('POST /api/admin/loans/:id/review', () => {
     it('assigns review → 200 IN_REVIEW', async () => {
       const app = createApp('PENDING');
       mockRepo.findById.mockResolvedValue(app);
@@ -160,7 +160,7 @@ describe('AdminLoanApplicationController integration', () => {
     });
   });
 
-  describe('POST /api/admin/loans/applications/:id/approve', () => {
+  describe('POST /api/admin/loans/:id/approve', () => {
     it('approves application → 200 APPROVED', async () => {
       const app = createApp('IN_REVIEW', 'admin-1', 2500);
       mockRepo.findById.mockResolvedValue(app);
@@ -180,7 +180,7 @@ describe('AdminLoanApplicationController integration', () => {
     });
   });
 
-  describe('POST /api/admin/loans/applications/:id/reject', () => {
+  describe('POST /api/admin/loans/:id/reject', () => {
     it('rejects application → 200 REJECTED', async () => {
       const app = createApp('IN_REVIEW', 'admin-1');
       mockRepo.findById.mockResolvedValue(app);
@@ -193,7 +193,7 @@ describe('AdminLoanApplicationController integration', () => {
     });
   });
 
-  describe('POST /api/admin/loans/applications/:id/request-info', () => {
+  describe('POST /api/admin/loans/:id/request-info', () => {
     it('requests info → 200 INFO_REQUESTED', async () => {
       const app = createApp('IN_REVIEW', 'admin-1');
       mockRepo.findById.mockResolvedValue(app);

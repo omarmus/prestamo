@@ -50,6 +50,7 @@ export class RegisterHandler {
       name: command.name,
       phone,
       passwordHash,
+      role: command.role,
     });
 
     // 6. Persist User

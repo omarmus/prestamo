@@ -88,7 +88,7 @@ export function useAdminLoans() {
     setIsLoading(true);
     try {
       setError(null);
-      return await api.post<AdminApplicationDetail>(`/api/admin/loans/${id}/assign`);
+      return await api.post<AdminApplicationDetail>(`/api/admin/loans/${id}/review`);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Error al asignar';
       setError(message);

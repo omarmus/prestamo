@@ -6,6 +6,7 @@ export class RegisterCommand {
     public readonly password: string,
     public readonly name: string,
     public readonly phone: string,
+    public readonly role?: 'USER' | 'ADMIN',
   ) {}
 
   /** Create a command with auto-generated password (for chatbot registration). */

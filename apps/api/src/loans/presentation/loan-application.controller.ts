@@ -13,10 +13,7 @@ import {
 
 import type { CreateLoanApplicationInput } from '@prestamos/shared';
 import { CreateLoanApplicationSchema } from '@prestamos/shared';
-import type { JwtPayload } from '@prestamos/shared';
-
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
-import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipes/zod-validation.pipe';
 import { CustomerGuard } from '../../customers/presentation/customer.guard';
 
@@ -53,7 +50,6 @@ export class LoanApplicationController {
   @Post()
   @HttpCode(201)
   create(
-    @CurrentUser() _user: JwtPayload,
     @Req() req: RequestWithCustomer,
     @Body(new ZodValidationPipe(CreateLoanApplicationSchema)) body: CreateLoanApplicationInput,
   ) {
@@ -61,24 +57,24 @@ export class LoanApplicationController {
   }
 
   @Get()
-  async list(@CurrentUser() user: JwtPayload) {
-    const applications = await this.listHandler.execute(user.sub);
+  async list(@Req() req: RequestWithCustomer) {
+    const applications = await this.listHandler.execute(req.customer.id);
     return { data: applications };
   }
 
   @Get(':id')
   get(
-    @CurrentUser() user: JwtPayload,
+    @Req() req: RequestWithCustomer,
     @Param('id') id: string,
   ) {
-    return this.getHandler.execute(user.sub, id);
+    return this.getHandler.execute(req.customer.id, id);
   }
 
   @Delete(':id')
   cancel(
-    @CurrentUser() user: JwtPayload,
+    @Req() req: RequestWithCustomer,
     @Param('id') id: string,
   ) {
-    return this.cancelHandler.execute(user.sub, id);
+    return this.cancelHandler.execute(req.customer.id, id);
   }
 }
