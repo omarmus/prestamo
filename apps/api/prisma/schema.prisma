@@ -64,6 +64,7 @@ model User {
   configsUpdated          SystemConfiguration[]
   whatsappContacts        WhatsAppContact[]
   loanApplicationsReviewed LoanApplication[]
+  adminNotes               AdminNote[]
 }
 
 model FailedLoginAttempt {
@@ -282,6 +283,20 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([actorId])
   @@index([createdAt])
+}
+
+model AdminNote {
+  id         String   @id @default(uuid())
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  entityType String   // "CUSTOMER" | "LOAN" | "APPLICATION"
+  entityId   String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([authorId])
 }
 
 model SystemConfiguration {
