@@ -33,15 +33,16 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "class-transformer": "^0.5.1",
-    "zod": "^3.25.0",
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
     "ioredis": "^5.0.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfmake": "^0.3.11",
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.24",
@@ -49,6 +50,7 @@
     "@types/jest": "^29.x",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^6.x",
     "jest": "^29.x",

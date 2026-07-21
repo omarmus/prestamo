@@ -6,6 +6,5 @@ export const ACTIVE_LOAN_QUERY = Symbol('ACTIVE_LOAN_QUERY');
 export const ADMIN_ACTIVE_LOAN_QUERY = Symbol('ADMIN_ACTIVE_LOAN_QUERY');
 export const GENERATED_DOCUMENT_REPOSITORY = Symbol('GENERATED_DOCUMENT_REPOSITORY');
 export const CONTRACT_STORAGE_SERVICE = Symbol('CONTRACT_STORAGE_SERVICE');
-// ponytail: Placeholder tokens for PR2 — registered but unused until generation service lands.
 export const GENERATE_CONTRACT_SERVICE = Symbol('GENERATE_CONTRACT_SERVICE');
 export const CONTRACT_TEMPLATE_REGISTRY = Symbol('CONTRACT_TEMPLATE_REGISTRY');

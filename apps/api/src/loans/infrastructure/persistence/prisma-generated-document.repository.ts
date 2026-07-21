@@ -27,9 +27,9 @@ export class PrismaGeneratedDocumentRepository implements GeneratedDocumentRepos
   }
 
   async save(doc: Omit<GeneratedDocumentRow, 'id' | 'createdAt'>): Promise<GeneratedDocumentRow> {
-    const row = await this.prisma.generatedDocument.create({
-      data: doc as unknown as PrismaGeneratedDocumentRow,
-    });
+    // ponytail: Cast to any to bypass Prisma DocumentType enum type constraint.
+    // Domain layer uses strings; Prisma enum conflicts with inline row types.
+    const row = await (this.prisma.generatedDocument.create as any)({ data: doc });
     return row as unknown as GeneratedDocumentRow;
   }
 }

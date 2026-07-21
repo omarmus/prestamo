@@ -9,6 +9,8 @@ import {
   ADMIN_ACTIVE_LOAN_QUERY,
   GENERATED_DOCUMENT_REPOSITORY,
   CONTRACT_STORAGE_SERVICE,
+  GENERATE_CONTRACT_SERVICE,
+  CONTRACT_TEMPLATE_REGISTRY,
 } from './loans.tokens';
 import { ADMIN_QUERY } from './application/ports/admin-query.port';
 import { PrismaLoanApplicationRepository } from './infrastructure/persistence/prisma-loan-application.repository';
@@ -17,6 +19,9 @@ import { PrismaLoanRepository } from './infrastructure/persistence/prisma-loan.r
 import { PrismaInstallmentRepository } from './infrastructure/persistence/prisma-installment.repository';
 import { PrismaGeneratedDocumentRepository } from './infrastructure/persistence/prisma-generated-document.repository';
 import { ContractStorageService } from './infrastructure/storage/contract-storage.service';
+import { ContractTemplateRegistry } from './application/contract-templates/contract-template-registry';
+import { buildLoanContractPdf } from './application/contract-templates/loan-contract.template';
+import { GenerateContractService } from './application/generate-contract.service';
 import { PrismaActiveLoanQueryImpl } from './infrastructure/active-loan-query/prisma-active-loan-query.impl';
 import { PrismaAdminActiveLoanQueryImpl } from './infrastructure/active-loan-query/prisma-admin-active-loan-query.impl';
 import { CreateApplicationHandler } from './application/create-application/create-application.handler';
@@ -35,6 +40,7 @@ import { AdminLoanApplicationController } from './presentation/admin-loan-applic
 import { ActiveLoanController } from './presentation/active-loan.controller';
 import { AdminPaymentController } from './presentation/admin-payment.controller';
 import { AdminGuard } from './presentation/admin.guard';
+import { ContractController } from './presentation/contract.controller';
 
 @Module({
   controllers: [
@@ -42,6 +48,7 @@ import { AdminGuard } from './presentation/admin.guard';
     AdminLoanApplicationController,
     ActiveLoanController,
     AdminPaymentController,
+    ContractController,
   ],
   providers: [
     { provide: LOAN_APPLICATION_REPOSITORY, useClass: PrismaLoanApplicationRepository },
@@ -53,6 +60,15 @@ import { AdminGuard } from './presentation/admin.guard';
     { provide: CUSTOMER_REPOSITORY, useClass: PrismaCustomerRepository },
     { provide: GENERATED_DOCUMENT_REPOSITORY, useClass: PrismaGeneratedDocumentRepository },
     { provide: CONTRACT_STORAGE_SERVICE, useClass: ContractStorageService },
+    {
+      provide: CONTRACT_TEMPLATE_REGISTRY,
+      useFactory: () => {
+        const registry = new ContractTemplateRegistry();
+        registry.register('loan-contract', buildLoanContractPdf);
+        return registry;
+      },
+    },
+    { provide: GENERATE_CONTRACT_SERVICE, useClass: GenerateContractService },
     CreateApplicationHandler,
     ListApplicationsHandler,
     GetApplicationHandler,

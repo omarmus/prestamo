@@ -8,12 +8,21 @@ function createPrismaMock() {
       findUnique: jest.fn(),
       create: jest.fn(),
     },
-  } as unknown as jest.Mocked<PrismaService>;
+  };
 }
+
+// ponytail: Cast Prisma methods to jest.Mock to avoid complex Prisma return types.
+// The mock shape matches PrismaGeneratedDocumentRepository's usage exactly.
+type PrismaGeneratedDoc = {
+  generatedDocument: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+  };
+};
 
 describe('PrismaGeneratedDocumentRepository', () => {
   let repo: PrismaGeneratedDocumentRepository;
-  let prisma: jest.Mocked<PrismaService>;
+  let prisma: PrismaGeneratedDoc;
 
   const mockRow: GeneratedDocumentRow = {
     id: 'doc-1',
@@ -27,7 +36,7 @@ describe('PrismaGeneratedDocumentRepository', () => {
 
   beforeEach(() => {
     prisma = createPrismaMock();
-    repo = new PrismaGeneratedDocumentRepository(prisma);
+    repo = new PrismaGeneratedDocumentRepository(prisma as unknown as jest.Mocked<PrismaService>);
   });
 
   describe('findByLoanId', () => {

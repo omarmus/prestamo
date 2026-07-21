@@ -1,8 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { LOAN_APPLICATION_REPOSITORY, LOAN_REPOSITORY } from '../../loans.tokens';
+import { LOAN_APPLICATION_REPOSITORY, LOAN_REPOSITORY, GENERATE_CONTRACT_SERVICE } from '../../loans.tokens';
+import { CUSTOMER_REPOSITORY } from '../../../customers/customers.tokens';
 import type { LoanApplicationRepository } from '../../domain/loan-application.repository';
 import type { LoanRepository } from '../../domain/loan.repository';
+import type { CustomerRepository } from '../../../customers/domain/customer.repository';
+import type { GenerateContractService } from '../generate-contract.service';
 import { Loan } from '../../domain/loan.entity';
 import { LoanNotFoundError, LoanNotOwnedByCustomerError } from '../../domain/loan-application.errors';
 import { LoanNotDisbursableError, LoanAlreadyDisbursedError } from '../../domain/loan.errors';
@@ -46,11 +49,17 @@ export interface DisburseLoanResponse {
 
 @Injectable()
 export class DisburseLoanHandler {
+  private readonly logger = new Logger(DisburseLoanHandler.name);
+
   constructor(
     @Inject(LOAN_APPLICATION_REPOSITORY)
     private readonly appRepo: LoanApplicationRepository,
     @Inject(LOAN_REPOSITORY)
     private readonly loanRepo: LoanRepository,
+    @Inject(CUSTOMER_REPOSITORY)
+    private readonly customerRepo: CustomerRepository,
+    @Inject(GENERATE_CONTRACT_SERVICE)
+    private readonly contractGenerator: GenerateContractService,
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
   ) {}
@@ -145,7 +154,45 @@ export class DisburseLoanHandler {
       } as never);
     });
 
-    // 5. Build response
+    // 5. Generate contract PDF (non-blocking — log and continue on failure)
+    try {
+      const customer = await this.customerRepo.findById(app.customerId);
+      if (customer) {
+        await this.contractGenerator.execute({
+          loanId,
+          templateType: 'loan-contract',
+          data: {
+            loanId,
+            amount: app.amount,
+            termMonths: app.termMonths,
+            annualRate: app.annualRate,
+            monthlyPayment: schedule.reduce((s, r) => s + r.totalAmount, 0) / schedule.length,
+            totalInterest: schedule.reduce((s, r) => s + r.interestAmount, 0),
+            totalPayment: schedule.reduce((s, r) => s + r.totalAmount, 0),
+            disbursedAt: now,
+            customer: {
+              firstName: customer.firstName,
+              lastName: customer.lastName,
+              documentNumber: customer.documentNumber,
+            },
+            lender: { name: 'Prestamos S.A.' },
+            installments: installments.map(inst => ({
+              number: inst.installmentNumber,
+              dueDate: new Date(inst.dueDate),
+              principal: inst.principalAmount,
+              interest: inst.interestAmount,
+              total: inst.totalAmount,
+            })),
+          },
+        });
+      }
+    } catch (err) {
+      // ponytail: Contract generation failure shouldn't roll back the disbursement.
+      // Add retry queue when generation reliability matters.
+      this.logger.warn(`Contract generation failed for loan ${loanId}: ${(err as Error).message}`);
+    }
+
+    // 6. Build response
     const monthlyPayment = schedule.reduce((s, r) => s + r.totalAmount, 0) / schedule.length;
     const totalInterest = schedule.reduce((s, r) => s + r.interestAmount, 0);
     const totalPayment = schedule.reduce((s, r) => s + r.totalAmount, 0);
