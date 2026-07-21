@@ -5,3 +5,5 @@ export * from './types/customer.types';
 export * from './schemas/simulation.schema';
 export * from './schemas/loan.schema';
 export * from './types/loan.types';
+export * from './schemas/admin.schema';
+export * from './types/admin.types';
