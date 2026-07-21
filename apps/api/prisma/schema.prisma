@@ -120,6 +120,7 @@ model Customer {
   simulations  LoanSimulation[]
   portalActions PortalAction[]
   loanApplications LoanApplication[]
+  loans            Loan[]
 }
 
 model CustomerAddress {
@@ -228,6 +229,7 @@ model LoanApplication {
   id             String   @id @default(uuid())
   customerId     String
   customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  loan           Loan?
   simulationId   String?
   simulation     LoanSimulation? @relation(fields: [simulationId], references: [id])
 
@@ -332,4 +334,90 @@ model ChatbotSession {
   data      Json?    // { name?, email?, amount?, termMonths?, purpose? }
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// --- Loan Disbursement & Payments (Fase 5) ---
+
+model Loan {
+  id                 String   @id @default(uuid())
+  applicationId      String   @unique
+  application        LoanApplication @relation(fields: [applicationId], references: [id])
+  customerId         String
+  customer           Customer @relation(fields: [customerId], references: [id])
+  amount             Decimal  @db.Decimal(18, 2)
+  termMonths         Int
+  annualRate         Decimal  @db.Decimal(10, 6)
+  monthlyPayment     Decimal  @db.Decimal(18, 2)
+  totalInterest      Decimal  @db.Decimal(18, 2)
+  totalPayment       Decimal  @db.Decimal(18, 2)
+  outstandingBalance Decimal  @db.Decimal(18, 2)
+  status             String   @default("ACTIVE")  // ACTIVE | CLOSED | DEFAULTED
+  disbursedAt        DateTime @default(now())
+  firstPaymentDate   DateTime?
+  nextPaymentDate    DateTime?
+  closedAt           DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  installments Installment[]
+  transactions LoanTransaction[]
+  documents    GeneratedDocument[]
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model Installment {
+  id                String   @id @default(uuid())
+  loanId            String
+  loan              Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  installmentNumber Int
+  dueDate           DateTime
+  principalAmount   Decimal  @db.Decimal(18, 2)
+  interestAmount    Decimal  @db.Decimal(18, 2)
+  totalAmount       Decimal  @db.Decimal(18, 2)
+  paidPrincipal     Decimal  @db.Decimal(18, 2) @default(0)
+  paidInterest      Decimal  @db.Decimal(18, 2) @default(0)
+  paidTotal         Decimal  @db.Decimal(18, 2) @default(0)
+  status            String   @default("PENDING") // PENDING | PAID | OVERDUE | DEFAULTED
+  paidAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([loanId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model LoanTransaction {
+  id          String   @id @default(uuid())
+  loanId      String
+  loan        Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  type        String   // DISBURSEMENT | PAYMENT
+  amount      Decimal  @db.Decimal(18, 2)
+  balanceAfter Decimal @db.Decimal(18, 2)
+  description String?
+  reference   String?
+  createdAt   DateTime @default(now())
+
+  @@index([loanId])
+  @@index([createdAt])
+}
+
+enum DocumentType {
+  LOAN_CONTRACT
+  PROMISSORY_NOTE
+}
+
+model GeneratedDocument {
+  id        String       @id @default(uuid())
+  loanId    String       @unique
+  loan      Loan         @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  type      DocumentType @default(LOAN_CONTRACT)
+  filePath  String
+  mimeType  String       @default("application/pdf")
+  metadata  Json?
+  createdAt DateTime     @default(now())
+
+  @@index([loanId])
 }
