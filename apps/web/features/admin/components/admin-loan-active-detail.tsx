@@ -3,7 +3,8 @@
 import type { AdminActiveLoanDetail } from '@prestamos/shared';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/ui/card';
 import { Badge } from '@/components/atoms/ui/badge';
-import { Button } from '@/components/atoms/ui/button';
+import { Button, buttonVariants } from '@/components/atoms/ui/button';
+import { Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/ui/table';
 import { PaymentDialog } from './payment-dialog';
 
@@ -76,6 +77,15 @@ export function AdminLoanActiveDetail({ detail, onRegisterPayment, isProcessing 
                 <p className="font-medium">Bs. {loan.totalInterest.toLocaleString('es-BO', { minimumFractionDigits: 2 })}</p>
               </div>
             </div>
+          <a
+            href={`/api/admin/loans/${loan.id}/contract`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Descargar Contrato
+          </a>
           </CardContent>
         </Card>
 

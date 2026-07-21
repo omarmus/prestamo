@@ -3,7 +3,9 @@
 import type { ActiveLoanDetail } from '@prestamos/shared';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/ui/card';
 import { Badge } from '@/components/atoms/ui/badge';
+import { buttonVariants } from '@/components/atoms/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/atoms/ui/table';
+import { Download } from 'lucide-react';
 
 const installmentStatusConfig: Record<string, { label: string; className: string }> = {
   PAID:    { label: 'Pagado', className: 'bg-green-100 text-green-700' },
@@ -103,6 +105,21 @@ export function ActiveLoanDetail({ detail }: ActiveLoanDetailProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Contract Download */}
+      {detail.status === 'ACTIVE' && (
+        <div className="flex justify-end">
+          <a
+            href={`/api/loans/${detail.id}/contract`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Descargar Contrato
+          </a>
+        </div>
+      )}
 
       {/* Installments Table */}
       <Card>

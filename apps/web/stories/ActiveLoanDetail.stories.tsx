@@ -54,6 +54,17 @@ const detail = {
   ],
 };
 
+const closedDetail = {
+  ...detail,
+  id: 'loan-2',
+  status: 'CLOSED' as const,
+  outstandingBalance: 0,
+  nextPaymentDate: null,
+  nextPaymentAmount: null,
+  paidInstallments: 12,
+  installments: Array.from({ length: 12 }, (_, i) => makeInstallment(i + 1, { status: 'PAID', paidAt: new Date(2026, 6 + (i + 1), 20).toISOString() })),
+};
+
 const meta: Meta<typeof ActiveLoanDetail> = {
   title: 'Loans/ActiveLoanDetail',
   component: ActiveLoanDetail,
@@ -66,4 +77,8 @@ type Story = StoryObj<typeof ActiveLoanDetail>;
 
 export const Default: Story = {
   args: { detail },
+};
+
+export const Closed: Story = {
+  args: { detail: closedDetail },
 };
