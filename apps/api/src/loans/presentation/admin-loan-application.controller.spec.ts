@@ -5,7 +5,7 @@ import { LoanApplication } from '../domain/loan-application.entity';
 import { ReviewApplicationHandler } from '../application/review-application/review-application.handler';
 import { ListPendingApplicationsHandler } from '../application/list-pending-applications/list-pending-applications.handler';
 import { PrismaAdminQueryImpl } from '../infrastructure/admin-query/prisma-admin-query.impl';
-import { AdminGuard } from './admin.guard';
+import { AdminGuard } from '../../shared/guards/admin.guard';
 import type { LoanStatus } from '../domain/value-objects/loan-status';
 
 function createApp(status: LoanStatus = 'PENDING', reviewerId: string | null = null, monthlyPayment = 2500): LoanApplication {

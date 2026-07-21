@@ -13,7 +13,7 @@ import type { JwtPayload } from '@prestamos/shared';
 import type { Customer } from '../../customers/domain/customer.entity';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CustomerGuard } from '../../customers/presentation/customer.guard';
-import { AdminGuard } from './admin.guard';
+import { AdminGuard } from '../../shared/guards/admin.guard';
 import {
   GENERATED_DOCUMENT_REPOSITORY,
   CONTRACT_STORAGE_SERVICE,

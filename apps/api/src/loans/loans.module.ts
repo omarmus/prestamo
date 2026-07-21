@@ -39,7 +39,7 @@ import { LoanApplicationController } from './presentation/loan-application.contr
 import { AdminLoanApplicationController } from './presentation/admin-loan-application.controller';
 import { ActiveLoanController } from './presentation/active-loan.controller';
 import { AdminPaymentController } from './presentation/admin-payment.controller';
-import { AdminGuard } from './presentation/admin.guard';
+import { AdminGuard } from '../shared/guards/admin.guard';
 import { ContractController } from './presentation/contract.controller';
 
 @Module({

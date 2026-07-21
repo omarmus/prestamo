@@ -23,7 +23,7 @@ import type { JwtPayload } from '@prestamos/shared';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipes/zod-validation.pipe';
-import { AdminGuard } from './admin.guard';
+import { AdminGuard } from '../../shared/guards/admin.guard';
 
 import { ReviewApplicationHandler } from '../application/review-application/review-application.handler';
 import { ListPendingApplicationsHandler } from '../application/list-pending-applications/list-pending-applications.handler';

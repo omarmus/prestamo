@@ -5,7 +5,7 @@ import type { AdminActiveLoanQueryInput } from '@prestamos/shared';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../shared/pipes/zod-validation.pipe';
-import { AdminGuard } from './admin.guard';
+import { AdminGuard } from '../../shared/guards/admin.guard';
 import { RegisterPaymentHandler } from '../application/register-payment/register-payment.handler';
 import type { RegisterPaymentInput } from '../application/register-payment/register-payment.handler';
 import { ListActiveLoansHandler } from '../application/list-active-loans/list-active-loans.handler';
