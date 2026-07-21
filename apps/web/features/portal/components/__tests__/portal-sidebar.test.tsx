@@ -31,7 +31,7 @@ describe('PortalSidebar', () => {
     expect(profileLink?.className).toContain('bg-primary');
   });
 
-  it('renders all 4 nav links (each appears twice: desktop + mobile)', () => {
+  it('renders all 5 nav links (each appears twice: desktop + mobile)', () => {
     render(
       <PortalSidebar
         user={{ name: 'Test', email: 'test@test.com' }}
@@ -39,7 +39,7 @@ describe('PortalSidebar', () => {
         onLogout={() => {}}
       />,
     );
-    const labels = ['Dashboard', 'Mi Perfil', 'Documentos', 'Simulador'];
+    const labels = ['Dashboard', 'Mi Perfil', 'Documentos', 'Mis Préstamos', 'Simulador'];
     for (const label of labels) {
       const matches = screen.getAllByText(label);
       expect(matches.length).toBe(2);

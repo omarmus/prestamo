@@ -9,6 +9,7 @@ import {
   UserCircle,
   FileText,
   Calculator,
+  CreditCard,
   LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/portal/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/portal/profile', label: 'Mi Perfil', icon: UserCircle },
   { href: '/portal/documents', label: 'Documentos', icon: FileText },
+  { href: '/portal/loans', label: 'Mis Préstamos', icon: CreditCard },
   { href: '/portal/simulator', label: 'Simulador', icon: Calculator },
 ];
 

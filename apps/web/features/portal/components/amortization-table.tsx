@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/ui/card';
 import { Button } from '@/components/atoms/ui/button';
 import { Progress } from '@/components/atoms/ui/progress';
@@ -32,6 +33,7 @@ export interface AmortizationTableProps {
 }
 
 export function AmortizationTable({ result }: AmortizationTableProps) {
+  const router = useRouter();
   const [schedulePage, setSchedulePage] = useState(1);
   const rowsPerPage = 12;
 
@@ -151,6 +153,16 @@ export function AmortizationTable({ result }: AmortizationTableProps) {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Apply button when simulation has an id (saved simulation) */}
+      {result.id && (
+        <Button
+          onClick={() => router.push(`/portal/loans/new?simulationId=${result.id}`)}
+          className="w-full"
+        >
+          Solicitar este préstamo
+        </Button>
+      )}
     </>
   );
 }
