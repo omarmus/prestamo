@@ -3,3 +3,5 @@ export * from './types/auth.types';
 export * from './schemas/customer.schema';
 export * from './types/customer.types';
 export * from './schemas/simulation.schema';
+export * from './schemas/loan.schema';
+export * from './types/loan.types';

@@ -5,6 +5,7 @@ import { SharedModule } from './shared/shared.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { CustomersModule } from './customers/customers.module';
 import { PublicModule } from './public/public.module';
+import { LoansModule } from './loans/loans.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PublicModule } from './public/public.module';
     CustomersModule,
     WhatsAppModule,
     PublicModule,
+    LoansModule,
   ],
 })
 export class AppModule {}

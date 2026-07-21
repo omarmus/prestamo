@@ -60,9 +60,10 @@ model User {
   customersUpdatedBy    Customer[] @relation("CustomerUpdatedBy")
   customersDeletedBy    Customer[] @relation("CustomerDeletedBy")
 
-  auditLogs              AuditLog[]
-  configsUpdated         SystemConfiguration[]
-  whatsappContacts       WhatsAppContact[]
+  auditLogs               AuditLog[]
+  configsUpdated          SystemConfiguration[]
+  whatsappContacts        WhatsAppContact[]
+  loanApplicationsReviewed LoanApplication[]
 }
 
 model FailedLoginAttempt {
@@ -118,6 +119,7 @@ model Customer {
   documents    CustomerDocument[]
   simulations  LoanSimulation[]
   portalActions PortalAction[]
+  loanApplications LoanApplication[]
 }
 
 model CustomerAddress {
@@ -218,6 +220,40 @@ model LoanSimulation {
   monthlyPayment Decimal? @db.Decimal(18, 2)
   schedule      Json?
   createdAt     DateTime @default(now())
+
+  applications LoanApplication[]
+}
+
+model LoanApplication {
+  id             String   @id @default(uuid())
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  simulationId   String?
+  simulation     LoanSimulation? @relation(fields: [simulationId], references: [id])
+
+  amount         Decimal  @db.Decimal(18, 2)
+  termMonths     Int
+  annualRate     Decimal  @db.Decimal(10, 6)
+  monthlyPayment Decimal  @db.Decimal(18, 2)
+  totalInterest  Decimal  @db.Decimal(18, 2)
+  totalPayment   Decimal  @db.Decimal(18, 2)
+  purpose        String?
+  status         String   @default("DRAFT")
+  riskScore      String?
+  timeline       Json?
+
+  reviewerId     String?
+  reviewer       User?    @relation(fields: [reviewerId], references: [id])
+  reviewNotes    String?
+  reviewedAt     DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([reviewerId])
+  @@index([createdAt])
 }
 
 model PortalAction {
