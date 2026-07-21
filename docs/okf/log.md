@@ -59,3 +59,65 @@
 - **roadmap.md**: MVP roadmap actualizado con 6 fases, basado en DAD-50 y estado actual del proyecto
 - **tables-mvp.md**: listado completo de las 28 tablas MVP con referencia al DAD de origen y estado de implementación
 - **index.md**: actualizado con links a roadmap, tables-mvp y data-models
+
+## 2026-07-17
+
+### Phase 1 — Infraestructura Compartida
+- **Prisma schema**: campos base agregados a todos los modelos (`organizationId`, soft delete, `version`, auditoría)
+- **AuditLog + SystemConfiguration**: modelos agregados al schema
+- **@Inject() en todos los constructores NestJS**: decorador explícito para compatibilidad con tsx/esbuild
+- **Turborepo DI tokens**: naming consistente con prefijo de módulo
+
+### Phase 2 — WhatsApp + Chatbot AI
+- **Prisma schema completo**: WhatsAppContact, WhatsAppConversation, WhatsAppMessage, ChatbotSession (4 tablas)
+- **Schema-only**: endpoints de WhatsApp Cloud API y chatbot AI pendientes para fase dedicada
+
+## 2026-07-18
+
+### Phase 2 — Customer Module (Backend + Frontend)
+- **Customer domain**: entidad con status/kycStatus, value objects, repositorio
+- **Customer application**: create (auto al registrarse), complete profile, upload documents
+- **Customer infrastructure**: Prisma repositorio, auto-creación en AuthRegisterHandler
+- **Portal Frontend**: dashboard, profile, documents (subir/ver), simulator con tabla de amortización
+- **Customer CRUD**: endpoints GET/me, PATCH/profile, document upload
+
+## 2026-07-19
+
+### Phase 3 — Loan Application Module (3 PRs encadenados)
+
+**PR 1 — Domain + Create:**
+- LoanApplication entity con state machine (DRAFT → PENDING → IN_REVIEW → APPROVED/REJECTED/CANCELLED)
+- LoanStatus value object con valid transitions lookup
+- CreateApplicationHandler con validación de dominio (amount, termMonths, annualRate)
+- Zod schemas compartidos: CreateLoanApplicationSchema, ReviewApplicationSchema
+- Prisma schema: loan_applications ya existente
+
+**PR 2 — Backend CRUD + Admin Review:**
+- GetApplicationQuery, GetApplicationsQuery, CancelApplicationCommand
+- Admin: ListPendingApplicationsQuery, ReviewApplicationCommand (assign/review/approve/reject/requestInfo)
+- PrismaLoanApplicationRepository con updateStatus atómico (optimistic locking via status match)
+- AdminGuard + CustomerGuard para separación de roles
+- LoanApplicationController (portal) + AdminLoanApplicationController (admin)
+
+**PR 3 — Frontend Portal + Admin UI:**
+- Portal: `/portal/loans` — listar solicitudes, `/portal/loans/new` — formulario de aplicación con monto/plazo/propósito, `/portal/loans/[id]` — tracking con timeline de estados
+- Admin: `/admin/loans` — bandeja con tabla de solicitudes pendientes, `/admin/loans/[id]` — detalle + acciones (assign, review, approve, reject)
+- Feature hooks: use-loans.ts (portal), use-admin-loans.ts (admin)
+- AdminGuard en frontend
+
+### Bug Fixes (commiteados a develop)
+- **Customer controller**: list/get/cancel usaban `user.sub` (userId) en vez de `req.customer.id` (customerId) — CustomerGuard ya adjunta req.customer
+- **Admin route prefix**: controller en `/api/admin/loans` (antes `/api/admin/loans/applications`) — coincidía con llamadas del frontend
+- **Register**: comando acepta `role` opcional para crear admins
+- **Frontend admin hook**: ruta `/assign` → `/review` (endpoint correcto del backend)
+- **Frontend response unwrap**: hook extraía `{ data }` de la respuesta axios
+
+## 2026-07-20
+
+### OKF Wiki — Actualización completa
+- **project.md**: fases actualizadas con las 3 nuevas fases completadas
+- **modules/loans.md**: nuevo — documentación del módulo Loans
+- **domain/loans.md**: nuevo — dominio de Loan Application con state machine
+- **roadmap.md**: mark Fases 1-4 como ✅, tabla de estado actualizada
+- **tables-mvp.md**: 20/30 tablas marcadas como implementadas
+- **index.md**: quick links actualizados con Loans y Customers

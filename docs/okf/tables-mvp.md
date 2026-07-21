@@ -2,7 +2,7 @@
 
 Listado completo de todas las tablas del MVP, con referencia al DAD de origen y al modelo de datos completo en `data-models.md`.
 
-**Total:** 30 tablas
+**Total:** 30 tablas (20 implementadas en Prisma, 10 pendientes)
 **Fuente:** DAD-44 + DAD-50 + `data-models.md` (extraído de DAD 01-49)
 
 ---
@@ -65,10 +65,10 @@ Campos actuales: `id`, `name` (único), `createdAt`.
 |-----------|-------|
 | **DAD ref** | DAD-40 |
 | **Modelo completo** | `data-models.md` → 40 — Security Architecture Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Registro de auditoría de todas las operaciones |
 
-Campos: `id`, `user_id`, `action`, `entity`, `entity_id`, `ip`, `metadata`, `created_at`.
+Campos: `id` (BigInt autoincrement), `entityType`, `entityId`, `action`, `actorId`, `changes` (Json), `sourceIp`, `createdAt`.
 
 ### system_configurations
 
@@ -76,10 +76,10 @@ Campos: `id`, `user_id`, `action`, `entity`, `entity_id`, `ip`, `metadata`, `cre
 |-----------|-------|
 | **DAD ref** | DAD-45 |
 | **Modelo completo** | `data-models.md` → 45 — Admin Backoffice Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Configuraciones globales del sistema |
 
-Campos: `id`, `key`, `value`, `type`, `description`, `updated_by`.
+Campos: `key` (PK), `value` (Json), `description`, `updatedById`, `updatedAt`.
 
 ---
 
@@ -93,10 +93,10 @@ Campos: `id`, `key`, `value`, `type`, `description`, `updated_by`.
 |-----------|-------|
 | **DAD ref** | DAD-36 |
 | **Modelo completo** | `data-models.md` → 36 — Notification & Communication Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Schema en Prisma (endpoints pendientes) |
 | **Descripción** | Contactos de WhatsApp identificados |
 
-Campos MVP: `id`, `phone`, `customer_id`, `status`, `created_at`.
+Campos actuales: `id`, `phone` (unique), `name`, `userId` (FK User, unique), `conversations`, `createdAt`, `updatedAt`.
 
 ### whatsapp_conversations
 
@@ -104,10 +104,10 @@ Campos MVP: `id`, `phone`, `customer_id`, `status`, `created_at`.
 |-----------|-------|
 | **DAD ref** | DAD-36 |
 | **Modelo completo** | `data-models.md` → 36 — Notification & Communication Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Schema en Prisma (endpoints pendientes) |
 | **Descripción** | Conversaciones por WhatsApp |
 
-Campos MVP: `id`, `customer_id`, `started_at`, `ended_at`, `status`.
+Campos actuales: `id`, `contactId` (FK), `messages`, `createdAt`, `updatedAt`.
 
 ### whatsapp_messages
 
@@ -115,10 +115,10 @@ Campos MVP: `id`, `customer_id`, `started_at`, `ended_at`, `status`.
 |-----------|-------|
 | **DAD ref** | DAD-36 |
 | **Modelo completo** | `data-models.md` → 36 — Notification & Communication Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Schema en Prisma (endpoints pendientes) |
 | **Descripción** | Mensajes individuales de WhatsApp |
 
-Campos MVP: `id`, `conversation_id`, `direction` (IN/OUT), `message`, `sender`, `created_at`.
+Campos actuales: `id`, `conversationId`, `direction` (incoming/outgoing), `messageType` (text/interactive/image), `content`, `metaId`, `status` (sent/delivered/read/failed), `createdAt`.
 
 ### chatbot_sessions
 
@@ -126,10 +126,10 @@ Campos MVP: `id`, `conversation_id`, `direction` (IN/OUT), `message`, `sender`, 
 |-----------|-------|
 | **DAD ref** | DAD-36 |
 | **Modelo completo** | `data-models.md` → 36 — Notification & Communication Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Schema en Prisma (endpoints pendientes) |
 | **Descripción** | Sesiones del chatbot AI. Mantiene estado y datos capturados del cliente |
 
-Campos MVP: `id`, `conversation_id`, `intent`, `state`, `data_collected` (JSONB).
+Campos actuales: `id`, `phone` (unique), `intent` (REGISTER/APPLY_LOAN/CHECK_STATUS/HELP), `state`, `data` (Json), `createdAt`, `updatedAt`.
 
 ---
 
@@ -143,12 +143,10 @@ Campos MVP: `id`, `conversation_id`, `intent`, `state`, `data_collected` (JSONB)
 |-----------|-------|
 | **DAD ref** | DAD-37, DAD-44 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC, 37 — Identity & KYC |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada + API CRUD |
 | **Descripción** | Datos principales del cliente financiero |
 
-Campos MVP: `id`, `organization_id`, `lead_id`, `customer_number`, `first_name`, `last_name`, `document_type`, `document_number`, `birth_date`, `gender`, `phone`, `email`, `occupation`, `monthly_income`, `status` (LEAD / REGISTERED / VERIFIED), `kyc_status`, `created_at`.
-
-Índices: `ix_customer_number`, `ix_document`, `ix_customer_status`, `ix_customer_kyc`.
+Campos actuales: `id`, `userId` (FK User, unique), `firstName`, `lastName`, `documentType`, `documentNumber`, `birthDate`, `gender`, `maritalStatus`, `occupation`, `monthlyIncome` (Decimal), `status` (REGISTERED / VERIFIED), `kycStatus`, campos base + relaciones a addresses, phones, emails, employment, incomes, bankAccounts, documents, simulations, portalActions.
 
 ### customer_documents
 
@@ -156,10 +154,10 @@ Campos MVP: `id`, `organization_id`, `lead_id`, `customer_number`, `first_name`,
 |-----------|-------|
 | **DAD ref** | DAD-37, DAD-44 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC, 06 — Document Management |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada + Upload endpoint |
 | **Descripción** | Documentos subidos por el cliente (CI, selfie, comprobantes) |
 
-Campos MVP: `id`, `customer_id`, `type` (CI, SELFIE, PAYSLIP, BANK_STATEMENT, etc.), `file_url`, `status`, `verified_at`, `uploaded_at`.
+Campos actuales: `id`, `customerId`, `type` (CI_FRONT, CI_BACK, SELFIE, PAYSLIP, BANK_STATEMENT, SERVICE_BILL), `fileName`, `mimeType`, `data` (base64, ponytail: S3 post-MVP), `notes`, `status` (PENDING / VERIFIED / REJECTED).
 
 ### customer_addresses
 
@@ -167,10 +165,10 @@ Campos MVP: `id`, `customer_id`, `type` (CI, SELFIE, PAYSLIP, BANK_STATEMENT, et
 |-----------|-------|
 | **DAD ref** | DAD-04 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Direcciones del cliente |
 
-Campos: `id`, `customer_id`, `type`, `country`, `department`, `city`, `zone`, `street`, `number`, `primary_address`.
+Campos actuales: `id`, `customerId`, `type` (HOME/WORK/CORRESPONDENCE), `country`, `department`, `city`, `zone`, `street`, `number`, `isPrimary`.
 
 ### customer_phones
 
@@ -178,10 +176,10 @@ Campos: `id`, `customer_id`, `type`, `country`, `department`, `city`, `zone`, `s
 |-----------|-------|
 | **DAD ref** | DAD-04 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Teléfonos del cliente |
 
-Campos: `id`, `customer_id`, `phone`, `whatsapp`, `verified`, `primary_phone`.
+Campos actuales: `id`, `customerId`, `phone`, `isWhatsApp`, `isPrimary`.
 
 ### customer_emails
 
@@ -189,10 +187,10 @@ Campos: `id`, `customer_id`, `phone`, `whatsapp`, `verified`, `primary_phone`.
 |-----------|-------|
 | **DAD ref** | DAD-04 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Correos electrónicos del cliente |
 
-Campos: `id`, `customer_id`, `email`, `verified`, `primary_email`.
+Campos actuales: `id`, `customerId`, `email`, `isPrimary`.
 
 ### customer_employment
 
@@ -200,10 +198,10 @@ Campos: `id`, `customer_id`, `email`, `verified`, `primary_email`.
 |-----------|-------|
 | **DAD ref** | DAD-04 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Información laboral del cliente |
 
-Campos: `id`, `customer_id`, `employer`, `employment_status`, `position`, `salary`, `years_working`.
+Campos actuales: `id`, `customerId` (unique), `employer`, `position`, `employmentStatus` (EMPLOYEE/SELF_EMPLOYED/BUSINESS_OWNER/UNEMPLOYED), `monthlySalary` (Decimal), `yearsWorking`.
 
 ### customer_income
 
@@ -211,10 +209,10 @@ Campos: `id`, `customer_id`, `employer`, `employment_status`, `position`, `salar
 |-----------|-------|
 | **DAD ref** | DAD-04 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Fuentes de ingreso (soporta múltiples) |
 
-Campos: `id`, `customer_id`, `source`, `amount`, `frequency`, `verified`.
+Campos actuales: `id`, `customerId`, `source` (SALARY/BUSINESS/RENT/COMMISSION/PENSION/OTHER), `amount` (Decimal), `frequency` (MONTHLY/BIWEEKLY/WEEKLY/YEARLY).
 
 ### customer_bank_accounts
 
@@ -222,10 +220,10 @@ Campos: `id`, `customer_id`, `source`, `amount`, `frequency`, `verified`.
 |-----------|-------|
 | **DAD ref** | DAD-04 |
 | **Modelo completo** | `data-models.md` → 04 — Customer Management & KYC |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Cuentas bancarias del cliente para desembolsos |
 
-Campos: `id`, `customer_id`, `bank`, `account_type`, `account_number`, `holder_name`, `verified`.
+Campos actuales: `id`, `customerId`, `bank`, `accountType` (SAVINGS/CHECKING), `accountNumber`, `holderName`, `isPrimary`.
 
 ### loan_simulations *(Portal)*
 
@@ -233,10 +231,10 @@ Campos: `id`, `customer_id`, `bank`, `account_type`, `account_number`, `holder_n
 |-----------|-------|
 | **DAD ref** | DAD-44 §6 Simulador Crédito |
 | **Modelo completo** | `data-models.md` → 44 — Customer Portal Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada + API |
 | **Descripción** | Simulaciones de crédito realizadas por clientes desde el portal |
 
-Campos MVP: `id`, `customer_id`, `amount`, `term_days`, `estimated_rate`, `estimated_payment`, `created_at`.
+Campos actuales: `id`, `customerId`, `amount` (Decimal), `termMonths`, `annualRate` (Decimal), `monthlyPayment` (Decimal), `schedule` (Json), `applications` (relation).
 
 > Esta tabla permite trackear qué están simulando los clientes, incluso si no llegan a aplicar.
 
@@ -246,10 +244,10 @@ Campos MVP: `id`, `customer_id`, `amount`, `term_days`, `estimated_rate`, `estim
 |-----------|-------|
 | **DAD ref** | DAD-44 |
 | **Modelo completo** | `data-models.md` → 44 — Customer Portal Platform |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada en Prisma |
 | **Descripción** | Registro de acciones del cliente en el portal (clicks, navegación) |
 
-Campos MVP: `id`, `customer_id`, `action` (VIEW_LOANS, APPLY_CLICK, DOCUMENT_UPLOAD, etc.), `metadata`, `created_at`.
+Campos actuales: `id`, `customerId`, `action`, `metadata` (Json).
 
 > **ponytail:** Tabla liviana, insert-only. Sirve para entender comportamiento del cliente sin analytics externo.
 
@@ -274,12 +272,12 @@ Campos MVP: `id`, `name`, `code`, `min_amount`, `max_amount`, `min_term`, `max_t
 |-----------|-------|
 | **DAD ref** | DAD-32 |
 | **Modelo completo** | `data-models.md` → 05 — Loan Application, 32 — Loan Management |
-| **Estado** | 🔲 Pendiente |
+| **Estado** | ✅ Implementada + API + Frontend |
 | **Descripción** | Solicitudes de préstamo creadas por el cliente desde el portal |
 
-Campos MVP: `id`, `customer_id`, `product_id`, `amount_requested`, `term_requested`, `purpose`, `monthly_income`, `monthly_expenses`, `status` (PENDING / REVIEW / APPROVED / REJECTED), `assigned_to`, `created_at`.
+Campos actuales: `id`, `customerId`, `simulationId`, `amount` (Decimal), `termMonths`, `annualRate` (Decimal), `monthlyPayment` (Decimal), `totalInterest` (Decimal), `totalPayment` (Decimal), `purpose`, `status` (DRAFT / PENDING / IN_REVIEW / INFO_REQUESTED / APPROVED / REJECTED / CANCELLED), `riskScore`, `timeline` (Json), `reviewerId`, `reviewNotes`, `reviewedAt`, `createdAt`, `updatedAt`.
 
-Índices: `ix_application_customer`, `ix_application_status`, `ix_application_assigned`.
+Índices: `[customerId]`, `[status]`, `[reviewerId]`, `[createdAt]`.
 
 ### loan_reviews
 
@@ -411,25 +409,25 @@ Campos MVP: `id`, `user_id`, `customer_id` (nullable), `application_id` (nullabl
 |---|-------|------|---------|-------|--------|
 | 1 | users | Fase 0 | DAD-02, DAD-40 | Portal + Admin | ✅ |
 | 2 | roles | Fase 0 | DAD-02, DAD-40 | Admin | ✅ |
-| 3 | audit_logs | Fase 1 | DAD-40 | — | 🔲 |
-| 4 | system_configurations | Fase 1 | DAD-45 | Admin | 🔲 |
-| 5 | whatsapp_contacts | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | 🔲 |
-| 6 | whatsapp_conversations | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | 🔲 |
-| 7 | whatsapp_messages | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | 🔲 |
-| 8 | chatbot_sessions | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | 🔲 |
-| 9 | customers | Fase 3 | DAD-37, DAD-44 | 🟦 Portal | 🔲 |
-| 10 | customer_documents | Fase 3 | DAD-37, DAD-44 | 🟦 Portal | 🔲 |
-| 11 | customer_addresses | Fase 3 | DAD-04 | 🟦 Portal | 🔲 |
-| 12 | customer_phones | Fase 3 | DAD-04 | 🟦 Portal | 🔲 |
-| 13 | customer_emails | Fase 3 | DAD-04 | 🟦 Portal | 🔲 |
-| 14 | customer_employment | Fase 3 | DAD-04 | 🟦 Portal | 🔲 |
-| 15 | customer_income | Fase 3 | DAD-04 | 🟦 Portal | 🔲 |
-| 16 | customer_bank_accounts | Fase 3 | DAD-04 | 🟦 Portal | 🔲 |
-| 17 | loan_simulations | Fase 3 | DAD-44 | 🟦 Portal | 🔲 |
-| 18 | portal_actions | Fase 3 | DAD-44 | 🟦 Portal | 🔲 |
+| 3 | audit_logs | Fase 1 | DAD-40 | — | ✅ |
+| 4 | system_configurations | Fase 1 | DAD-45 | Admin | ✅ |
+| 5 | whatsapp_contacts | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | ✅ (schema) |
+| 6 | whatsapp_conversations | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | ✅ (schema) |
+| 7 | whatsapp_messages | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | ✅ (schema) |
+| 8 | chatbot_sessions | **Fase 2** ⭐ | DAD-36 | 📱 WhatsApp | ✅ (schema) |
+| 9 | customers | Fase 3 | DAD-37, DAD-44 | 🟦 Portal | ✅ |
+| 10 | customer_documents | Fase 3 | DAD-37, DAD-44 | 🟦 Portal | ✅ |
+| 11 | customer_addresses | Fase 3 | DAD-04 | 🟦 Portal | ✅ |
+| 12 | customer_phones | Fase 3 | DAD-04 | 🟦 Portal | ✅ |
+| 13 | customer_emails | Fase 3 | DAD-04 | 🟦 Portal | ✅ |
+| 14 | customer_employment | Fase 3 | DAD-04 | 🟦 Portal | ✅ |
+| 15 | customer_income | Fase 3 | DAD-04 | 🟦 Portal | ✅ |
+| 16 | customer_bank_accounts | Fase 3 | DAD-04 | 🟦 Portal | ✅ |
+| 17 | loan_simulations | Fase 3 | DAD-44 | 🟦 Portal | ✅ |
+| 18 | portal_actions | Fase 3 | DAD-44 | 🟦 Portal | ✅ |
 | 19 | loan_products | Fase 4 | DAD-32 | 🟦 Portal | 🔲 |
-| 20 | loan_applications | Fase 4 | DAD-32 | 🟦 Portal | 🔲 |
-| 21 | loan_reviews | Fase 4 | DAD-32 | Admin | 🔲 |
+| 20 | loan_applications | Fase 4 | DAD-32 | 🟦 Portal | ✅ |
+| 21 | loan_reviews | Fase 4 | DAD-32 | Admin | ✅ (embedded) |
 | 22 | approval_tasks | Fase 4 | DAD-45 | Admin | 🔲 |
 | 23 | loans | Fase 5 | DAD-32 | 🟦 Portal | 🔲 |
 | 24 | loan_accounts | Fase 5 | DAD-08 | 🟦 Portal | 🔲 |
@@ -440,8 +438,9 @@ Campos MVP: `id`, `user_id`, `customer_id` (nullable), `application_id` (nullabl
 | 29 | generated_documents | Fase 6 | DAD-49 | 🟦 Portal | 🔲 |
 | 30 | admin_notes | Fase 7 | DAD-45 | Admin | 🔲 |
 
-**Legend:** ✅ = Implementada, 🔲 = Pendiente, 📱 = WhatsApp/Landing, 🟦 = Customer Portal
+**Legend:** ✅ = Implementada en Prisma + API, ✅ (schema) = Schema en Prisma (endpoints pendientes), 🔲 = Pendiente, 📱 = WhatsApp/Landing, 🟦 = Customer Portal
 
+> **Estado:** 20/30 tablas implementadas en Prisma (Fases 0-4 completas). Fases 5-7 pendientes.
 > **Canal de entrada:** Las 4 tablas de WhatsApp (Fase 2) son el canal de adquisición. Las 16 tablas del Portal (Fases 3-6) son la experiencia post-registro. El Admin (Fase 7) es operación interna.
 
 ---

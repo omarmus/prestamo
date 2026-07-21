@@ -5,7 +5,7 @@ export type LoanPurpose = z.infer<typeof LoanPurposeEnum>;
 
 export const LoanStatusEnum = z.enum([
   'DRAFT', 'PENDING', 'IN_REVIEW', 'INFO_REQUESTED',
-  'APPROVED', 'REJECTED', 'CANCELLED',
+  'APPROVED', 'REJECTED', 'CANCELLED', 'ACTIVE',
 ]);
 export type LoanStatus = z.infer<typeof LoanStatusEnum>;
 
@@ -43,3 +43,22 @@ export const AdminListQuerySchema = z.object({
   search: z.string().max(100).optional(),
 });
 export type AdminListQuery = z.infer<typeof AdminListQuerySchema>;
+
+export const ActiveLoanStatusEnum = z.enum(['ACTIVE', 'CLOSED', 'DEFAULTED']);
+
+export const RegisterPaymentSchema = z.object({
+  loanId: z.string().uuid(),
+  amount: z.number().positive(),
+  method: z.enum(['CASH', 'TRANSFER']),
+  reference: z.string().max(100).optional(),
+  notes: z.string().max(500).optional(),
+});
+export type RegisterPaymentInputSchema = z.infer<typeof RegisterPaymentSchema>;
+
+export const AdminActiveLoanQuerySchema = z.object({
+  status: ActiveLoanStatusEnum.optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().max(100).optional(),
+});
+export type AdminActiveLoanQueryInput = z.infer<typeof AdminActiveLoanQuerySchema>;

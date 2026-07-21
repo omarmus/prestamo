@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { AdminApplicationDetail } from '@prestamos/shared';
 import { useAdminLoans } from '@/features/admin/hooks/use-admin-loans';
+import { useAdminPayments } from '@/features/admin/hooks/use-admin-payments';
 import { AdminLoanReview } from '@/features/admin/components/admin-loan-review';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminLoanReviewPage() {
   const params = useParams();
   const { getDetail, approve, reject, requestInfo, assignReview, isLoading, error } = useAdminLoans();
+  const { disburse } = useAdminPayments();
   const [detail, setDetail] = useState<AdminApplicationDetail | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -63,6 +65,15 @@ export default function AdminLoanReviewPage() {
     }
   }, [detail, assignReview]);
 
+  const handleDisburse = useCallback(async (applicationId: string) => {
+    setIsProcessing(true);
+    try {
+      return await disburse(applicationId);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [disburse]);
+
   if (isLoading) {
     return (
       <main className="flex justify-center p-8">
@@ -87,6 +98,7 @@ export default function AdminLoanReviewPage() {
         onReject={handleReject}
         onRequestInfo={handleRequestInfo}
         onAssign={handleAssign}
+        onDisburse={handleDisburse}
         isProcessing={isProcessing}
       />
     </main>

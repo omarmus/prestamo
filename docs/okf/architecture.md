@@ -3,7 +3,7 @@ type: Architecture
 title: System Architecture
 description: Clean Architecture + DDD + Modular Monolith sobre NestJS con Turborepo.
 tags: [architecture, ddd, clean-architecture, modular-monolith]
-timestamp: 2026-07-16T12:00:00-04:00
+timestamp: 2026-07-20T12:00:00-04:00
 ---
 
 # System Architecture
@@ -11,6 +11,8 @@ timestamp: 2026-07-16T12:00:00-04:00
 ## Paradigma
 
 **Clean Architecture + Domain-Driven Design + Modular Monolith** sobre un monorepo Turborepo. Cada módulo de dominio (Identity, Loans, Payments, etc.) vive en `apps/api/src/<module>/` con sus propias capas.
+
+**Módulos activos:** `identity` (auth), `loans` (crédito), `customers` (perfil), `landing`, `whatsapp` (schema), `notifications` (core).
 
 ## Backend — Clean Architecture + DDD
 
@@ -59,9 +61,20 @@ components/
 
 features/               # DDD feature modules
 ├── auth/
-│   ├── components/     # Feature-specific organisms
-│   └── hooks/          # Custom hooks (useAuth, useLogin)
-└── loans/
+│   ├── components/     # LoginForm, RegisterForm
+│   └── hooks/          # useAuth, useLogin
+├── loans/
+│   ├── components/     # LoanForm, LoanList, LoanDetail
+│   └── hooks/          # useLoans
+├── admin/
+│   ├── components/     # AdminLoanTable, AdminLoanReview
+│   └── hooks/          # useAdminLoans
+├── landing/
+│   ├── components/     # Hero, Features, Footer, Simulator
+│   └── hooks/          # usePublicSimulator
+└── portal/
+    ├── components/     # Sidebar, CustomerForm, DocumentUploader, SimulatorForm
+    └── hooks/          # useCustomer, useDocuments, useSimulator
 
 lib/                    # Shared utilities (utils.ts con cn())
 providers/              # React context providers

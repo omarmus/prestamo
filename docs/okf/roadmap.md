@@ -2,7 +2,7 @@
 
 **Basado en:** DAD-50 (MVP Implementation Roadmap) + DAD-44 (Customer Portal) + DAD-36 (WhatsApp)
 **Estado:** Planning activo
-**Última actualización:** 2026-07-16
+**Última actualización:** 2026-07-20
 
 ---
 
@@ -82,20 +82,21 @@ Ambos convergen en el Customer Portal para la gestión post-registro.
 
 | Capa | Módulo | Backend | Frontend | Prisma |
 |------|--------|---------|----------|--------|
-| **Landing** | Página pública | — | ✅ Layout, HomePage | — |
-| **Auth** | Identity | ✅ Register, Login, Refresh, Me | ✅ LoginForm, RegisterForm, AuthProvider | ✅ User, Role |
-| **Portal** | Customer Dashboard | ❌ | ❌ | ❌ |
-| **Portal** | Loan Application | ❌ | ❌ | ❌ |
-| **Portal** | Document Upload | ❌ | ❌ | ❌ |
-| **Portal** | Payments | ❌ | ❌ | ❌ |
-| **WhatsApp** | Cloud API + Webhook | ❌ | ❌ | ❌ |
-| **Chatbot** | AI Bot + Sessions | ❌ | ❌ | ❌ |
-| **Backend** | Customer Management | ❌ | — | ❌ |
-| **Backend** | Loan Products | ❌ | — | ❌ |
-| **Backend** | Loans & Installments | ❌ | — | ❌ |
-| **Backend** | Payments Engine | ❌ | — | ❌ |
+| **Landing** | Página pública | — | ✅ Layout, HomePage, Simulator | — |
+| **Auth** | Identity | ✅ Register, Login, Refresh, Me | ✅ LoginForm, RegisterForm, AuthProvider | ✅ User, Role, FailedLoginAttempt |
+| **Portal** | Customer Dashboard | ✅ Profile CRUD | ✅ Dashboard, Profile, Sidebar | ✅ Customer (20 tablas) |
+| **Portal** | Loan Application | ✅ CRUD + Admin Review | ✅ Apply, List, Track | ✅ LoanApplication |
+| **Portal** | Document Upload | ✅ Upload endpoint | ✅ Documents page | ✅ CustomerDocument |
+| **Portal** | Loan Simulator | ✅ Simulation engine | ✅ Simulator + Amortization | ✅ LoanSimulation |
+| **Portal** | Payments | ✅ Loan disbursement, installment schedule, payment registration | ✅ DisbursementButton, PaymentDialog, ActiveLoanList, ActiveLoanDetail | ✅ Loan, Installment, LoanTransaction |
+| **WhatsApp** | Cloud API + Webhook | ❌ | ❌ | ✅ Schema (4 tablas) |
+| **Chatbot** | AI Bot + Sessions | ❌ | — | ✅ Schema |
+| **Backend** | Customer Management | ✅ Full CRUD + auto-create | — | ✅ Customer + 8 sub-tablas |
+| **Backend** | Loan Applications | ✅ Full + Admin review | — | ✅ LoanApplication + Timeline |
+| **Backend** | Loans & Installments | ✅ DisburseLoanHandler, amortization calculator, ActiveLoanQuery | — | ✅ Loan, Installment |
+| **Backend** | Payments Engine | ✅ RegisterPaymentHandler, atomic transactions, FIFO allocation | — | ✅ LoanTransaction |
 | **Backend** | Legal Docs | ❌ | — | ❌ |
-| **Admin** | Admin Backoffice | ❌ | ❌ | ❌ |
+| **Admin** | Admin Backoffice | ✅ Loan admin endpoints | ✅ Admin loans pages | — |
 
 ---
 
@@ -125,241 +126,159 @@ model FailedLoginAttempt { id String @id @default(uuid()); email String; ip Stri
 
 ---
 
-### Fase 1 — Fundación: Base de Datos & Plataforma
+### Fase 1 ✅ — Fundación: Base de Datos & Plataforma *(Completada)*
 
 **Duración:** 1 semana
 **DAD ref:** DAD-01, DAD-40
 
-**Objetivo:** Preparar la infraestructura compartida que TODO lo demás necesita.
+**Logrado:**
+- Schema Prisma centralizado con modelos base
+- Campos base en todas las tablas (`organizationId`, `deletedAt`, `version`, `createdById`, `updatedById`, `deletedById`)
+- `@Inject()` explícito en todos los constructores NestJS para compatibilidad con tsx/esbuild
+- Turborepo DI tokens con naming consistente
+- Auditoría: `AuditLog` implementado en schema
+- `SystemConfiguration` implementado en schema
 
-**Backend:**
-- Schema Prisma centralizado con los modelos base
-- Campos base en cada tabla (`organization_id`, timestamps, soft delete, version)
-- Shared NestJS module: BaseEntity, BaseRepository, PrismaService global
-- `audit_logs` — middleware de auditoría automática
-- `system_configurations` — settings globales
-
-**Tablas nuevas:** `audit_logs`, `system_configurations`
-**Tablas modificadas:** `users`, `roles` (agregar campos base)
+**Tablas:** `audit_logs`, `system_configurations`
+**Tablas modificadas:** `users`, `roles`, `failed_login_attempts` (+`organizationId`, soft delete, version, auditoría)
 
 ---
 
-### Fase 2 ⭐ — Captación: WhatsApp + Chatbot AI
+### Fase 2 ✅ — Captación: WhatsApp + Chatbot AI *(Schema completado, endpoints pendientes)*
 
 **Duración:** 2-3 semanas
 **DAD ref:** DAD-36 (WhatsApp & Notifications), DAD-50 Fase 2
 
 **Objetivo:** El cliente llega a la Landing, hace clic en WhatsApp, y un chatbot AI lo guía para registrarse y solicitar su préstamo. **Este es el canal de adquisición PRIMARIO del MVP.**
 
-#### Estrategia
+#### Logrado (Phase 2 + Phase 3 del build real)
 
-El chatbot no reemplaza al portal — lo alimenta. El bot captura datos, crea el cliente y la solicitud, y luego deriva al portal para completar documentos y hacer seguimiento.
+**WhatsApp + Chatbot (Schema-only):**
+- Prisma schema completo: WhatsAppContact, WhatsAppConversation, WhatsAppMessage, ChatbotSession
+- **Endpoints pendientes**: Cloud API Webhook + Chatbot AI logic quedan para fase dedicada
 
-```
-Landing Page
-     │
-     ▼
-[Contáctanos por WhatsApp]  ← botón flotante
-     │
-     ▼
-WhatsApp Cloud API → Webhook → Chatbot AI
-     │                              │
-     │   ╔══════════════════════╗   │
-     │   ║  ¿Ya tienes cuenta?  ║   │
-     │   ║                      ║   │
-     │   ║  NO → Registro:      ║   │
-     │   ║   • Nombre, CI,      ║   │
-     │   ║     teléfono,        ║   │
-     │   ║     ingresos         ║   │
-     │   ║                      ║   │
-     │   ║  → Crea customer     ║   │
-     │   ║  → Envía link al     ║   │
-     │   ║    portal para subir ║   │
-     │   ║    documentos        ║   │
-     │   ║                      ║   │
-     │   ║  SÍ → Consulta:      ║   │
-     │   ║   • Estado solicitud ║   │
-     │   ║   • Próxima cuota    ║   │
-     │   ║   • Saldo            ║   │
-     │   ╚══════════════════════╝   │
-     │                              │
-     └──→ Crea customer + loan_application
-          (si aplica)
-```
+**Customer Management (Full CRUD):**
+- Módulo Customers con Clean Architecture: domain, application, infrastructure, presentation
+- Auto-creación de Customer al registrarse (AuthRegisterHandler)
+- Portal profile: GET/me, PATCH/profile con datos personales, empleo, ingresos
+- CustomerDocument: subida y listado de documentos (CI, selfie, recibos)
+- LoanSimulation: simulador con cálculo de cuota mensual y tabla de amortización
 
-#### Backend — WhatsApp + Chatbot
+**Landing Page:**
+- Hero + features + footer
+- Simulador público de crédito con cálculo de cuota mensual
+- Diseño mobile-ready
 
-1. **WhatsApp Cloud API**
-   - Webhook para recibir mensajes entrantes
-   - Envío de mensajes (texto, plantillas, imágenes)
-   - Verificación de webhook (challenge)
-   - Manejo de rate limits y reconnects
+**Portal Frontend:**
+- Dashboard con resumen del cliente
+- Profile: formulario completo de datos personales
+- Documents: subir/ver documentos
+- Simulator: monto, plazo, cuota, tabla de amortización
 
-2. **Chatbot AI**
-   - `chatbot_sessions` — estado de cada conversación (intent, state, data_collected)
-   - Intents MVP:
-     - `REGISTER` → capturar datos: nombre, CI, teléfono, ingresos → crear customer
-     - `APPLY_LOAN` → capturar: monto, plazo, propósito → crear loan_application
-     - `CHECK_STATUS` → consultar estado de solicitud activa
-     - `HELP` → menú de opciones
-   - Integración con API de AI (Claude/GPT) para理解和 respuesta natural
-   - Fallback a menú estructurado cuando AI no responde
-
-3. **Tablas**
-   - `whatsapp_contacts`: contacto identificado
-   - `whatsapp_conversations`: sesión de conversación
-   - `whatsapp_messages`: cada mensaje individual
-   - `chatbot_sessions`: estado del bot, intent, datos capturados
-
-#### Frontend — Landing Page
-
-- Botón flotante de WhatsApp con número configurable
-- Metatags para compartir en WhatsApp (preview con texto)
-- Landing adaptada para mobile (donde se usa WhatsApp)
-
-**Tablas nuevas:**
-| Tabla | Descripción |
-|-------|-------------|
-| whatsapp_contacts | Contactos identificados vía WhatsApp |
-| whatsapp_conversations | Conversaciones |
-| whatsapp_messages | Mensajes individuales |
-| chatbot_sessions | Estado de sesión del bot AI |
+**Tablas nuevas implementadas:**
+| Tabla | Descripción | Estado |
+|-------|-------------|--------|
+| customers | Datos principales del cliente | ✅ |
+| customer_addresses | Direcciones | ✅ |
+| customer_phones | Teléfonos | ✅ |
+| customer_emails | Emails | ✅ |
+| customer_employment | Información laboral | ✅ |
+| customer_incomes | Fuentes de ingreso | ✅ |
+| customer_bank_accounts | Cuentas bancarias | ✅ |
+| customer_documents | Documentos subidos | ✅ |
+| loan_simulations | Simulaciones de crédito | ✅ |
+| portal_actions | Acciones del cliente | ✅ |
+| whatsapp_contacts | Contactos WhatsApp | ✅ (schema) |
+| whatsapp_conversations | Conversaciones | ✅ (schema) |
+| whatsapp_messages | Mensajes | ✅ (schema) |
+| chatbot_sessions | Sesiones del bot | ✅ (schema) |
 
 ---
 
-### Fase 3 — Customer Portal Core + Clientes
+### Fase 3 ✅ — Customer Portal Core + Clientes *(Completada — merged con Phase 2 del build)*
 
 **Duración:** 2-3 semanas
 **DAD ref:** DAD-44, DAD-37
 
 **Objetivo:** Construir el portal autenticado donde el cliente gestiona su perfil, documentos y ve el estado de sus operaciones.
 
-Esto es lo que el cliente ve DESPUÉS de registrarse (por WhatsApp o web).
-
-#### Backend — Customer Management
-
-- Módulo Customers (NestJS, Clean Architecture)
-- Tablas: `customers`, `customer_documents`, `customer_addresses`, `customer_phones`, `customer_emails`, `customer_employment`, `customer_income`, `customer_bank_accounts`
-- Endpoints CRUD + subida de documentos a S3
-
-#### Frontend — Portal Core
-
-| Ruta | Propósito |
-|------|-----------|
-| `/portal/dashboard` | Dashboard: resumen, acciones rápidas |
-| `/portal/profile` | Perfil y datos personales |
-| `/portal/documents` | Subir y gestionar documentos |
-| `/portal/simulator` | Simulador de crédito |
-
-Dashboard del cliente (sin préstamo activo):
-```
-┌─────────────────────────────────────┐
-│  ¡Bienvenido, Juan!                 │
-│                                     │
-│  📄 Documentos: 2 de 4 subidos      │
-│                                     │
-│  ┌──────────────┐  ┌──────────────┐ │
-│  │ Solicitar     │  │ Simular      │ │
-│  │ préstamo     │  │ préstamo     │ │
-│  └──────────────┘  └──────────────┘ │
-│                                     │
-│  ¿Hablaste con nosotros por         │
-│  WhatsApp? Tus datos ya están acá.  │
-└─────────────────────────────────────┘
-```
-
-**Tablas nuevas:** `customers`, `customer_documents`, `customer_addresses`, `customer_phones`, `customer_emails`, `customer_employment`, `customer_income`, `customer_bank_accounts`, `loan_simulations`, `portal_actions`
+**Ver detalle en Fase 2 ✅** — esta fase se implementó junto con Customer Management.
 
 ---
 
-### Fase 4 — Portal: Solicitud y Evaluación de Crédito
+### Fase 4 ✅ — Portal: Solicitud y Evaluación de Crédito *(Completada)*
 
 **Duración:** 2-3 semanas
 **DAD ref:** DAD-44 §7, DAD-32
 
-**Objetivo:** El cliente solicita un préstamo desde el portal, y el analista lo evalúa desde el admin.
+**Logrado (3 PRs encadenados):**
 
-#### Backend — Loan Products & Applications
+**Domain + Create:**
+- LoanApplication entity con state machine (`transition()`)
+- LoanStatus value object con `VALID_TRANSITIONS` lookup
+- Evento de dominio (timeline) registrado en cada transición
+- Validación de dominio: amount, termMonths, annualRate, purpose
+- Zod schemas compartidos en `packages/shared`
 
-- `loan_products`: catálogo (tipo, monto, plazo, tasa)
-- `loan_applications`: solicitud con flujo de estados
-- `loan_reviews`: revisión del analista
-- `approval_tasks`: tareas asignadas
+**Backend CRUD + Admin Review:**
+- Portal endpoints: POST create, GET list, GET by id, POST cancel
+- Admin endpoints: GET list (paginated), GET by id, POST assign, POST review, POST approve, POST reject, POST request-info
+- `PrismaLoanApplicationRepository` con `updateStatus()` atómico (optimistic locking via status match)
+- AdminGuard + CustomerGuard para separación de roles
+- Comportamiento verificado con curl
 
-#### Frontend — Portal Aplicación
+**Frontend Portal:**
+- `/portal/loans` — lista de solicitudes con estado
+- `/portal/loans/new` — formulario: monto, plazo, propósito
+- `/portal/loans/[id]` — detalle con timeline de estados
 
-| Ruta | Propósito |
-|------|-----------|
-| `/portal/apply` | Seleccionar producto → monto/plazo → enviar |
-| `/portal/apply/:id` | Tracking: "En revisión", "Aprobado", "Rechazado" |
+**Frontend Admin:**
+- `/admin/loans` — bandeja con tabla de solicitudes pendientes
+- `/admin/loans/[id]` — detalle + acciones (assign, review, approve, reject, request-info)
+- AdminGuard en frontend
 
-#### Admin — Evaluación
-
-| Ruta | Propósito |
-|------|-----------|
-| `/admin/applications` | Bandeja de solicitudes |
-| `/admin/applications/:id` | Detalle + evaluar (aprobar/rechazar) |
-
-**Tablas nuevas:** `loan_products`, `loan_applications`, `loan_reviews`, `approval_tasks`
+**Tablas:**
+| Tabla | Descripción | Estado |
+|-------|-------------|--------|
+| loan_applications | Solicitud con amount, termMonths, annualRate, status, timeline | ✅ |
+| loan_reviews | Integrada en timeline de loan_application (no tabla separada) | ✅ (embedded) |
+| loan_products | Pendiente — productos se definen en configuración | 🔲 |
+| approval_tasks | Pendiente — tareas separadas post-MVP | 🔲 |
 
 ---
 
-### Fase 5 — Portal: Préstamos Activos y Pagos
+### Fase 5 ✅ — Portal: Préstamos Activos y Pagos *(Completada)*
 
 **Duración:** 2-3 semanas
 **DAD ref:** DAD-44 §8, DAD-08, DAD-09
 
 **Objetivo:** El cliente ve sus préstamos activos, cuotas, y puede pagar desde el portal.
 
-#### Backend — Loans & Payments
+**Logrado (3 chained PRs + verificación):**
 
-- `loans`: préstamo aprobado
-- `loan_accounts`: balance financiero
-- `installments`: cronograma con generación automática
-- `loan_transactions`: libro mayor inmutable
-- `payments`: registro de pagos (cash, transfer, other)
-- Cálculo de intereses y mora
+#### Backend — Loans & Payments
+- `Loan` domain entity con balance tracking (simplificado: no `loan_accounts` separada)
+- `Installment` entity con cronograma francés automático (P * r(1+r)^n / ((1+r)^n - 1))
+- `LoanTransaction` libro mayor inmutable (reemplaza `payments` + `loan_accounts`)
+- `AmortizationCalculator` con 12 tests
+- `DisburseLoanHandler` — desembolso atómico con creación de cronograma
+- `RegisterPaymentHandler` — pago FIFO sobre cuotas pendientes (sin pagos parciales, sin sobregiro)
+- `ActiveLoanQuery` + `AdminActiveLoanQuery` — consultas para portal y admin
+- ActiveLoanStatus: ACTIVE → CLOSED/DEFAULTED
+- InstallmentStatus: PENDING → PAID | OVERDUE | DEFAULTED
+- Loan.applicationId @unique — previene doble desembolso
 
 #### Frontend — Portal Financiero
-
 | Ruta | Propósito |
 |------|-----------|
-| `/portal/loans` | Mis préstamos |
+| `/portal/loans` | Mis préstamos activos |
 | `/portal/loans/:id` | Detalle: cuotas, saldo, próxima cuota |
-| `/portal/loans/:id/pay` | Pagar cuota |
+| `/admin/loans/active` | Admin — préstamos activos |
 
-Dashboard con préstamo activo:
-```
-┌─────────────────────────────────────┐
-│  Préstamo Bs5,000                   │
-│  Saldo: Bs2,800  ▼░░░░░░░░░ 44%    │
-│                                     │
-│  Próxima cuota: Bs350               │
-│  Vence: 15 agosto                   │
-│                                     │
-│  ┌──────────────────────────────┐   │
-│  │ [Pagar cuota]                │   │
-│  └──────────────────────────────┘   │
-│                                     │
-│  Cuotas:                            │
-│  ┌──┬────────┬───────┬──────────┐  │
-│  │ #│ Vence  │ Monto │ Estado   │  │
-│  ├──┼────────┼───────┼──────────┤  │
-│  │ 1│ 15/06  │ 350   │ ✅ Pagada│  │
-│  │ 2│ 15/07  │ 350   │ ✅ Pagada│  │
-│  │ 3│ 15/08  │ 350   │ ⏳ Pend. │  │
-│  └──┴────────┴───────┴──────────┘  │
-└─────────────────────────────────────┘
-```
+Componentes: ActiveLoanList, ActiveLoanDetail, DisbursementButton, PaymentDialog (admin), AdminLoanActiveTable
 
-#### Admin — Gestión
-
-| Ruta | Propósito |
-|------|-----------|
-| `/admin/loans` | Todos los préstamos activos |
-| `/admin/payments` | Registrar pago manual |
-
-**Tablas nuevas:** `loans`, `loan_accounts`, `installments`, `loan_transactions`, `payments`
+**Tablas nuevas:** `Loan`, `Installment`, `LoanTransaction` (3, simplificadas de 5 previstas)
+**SDD archive:** `openspec/changes/archive/2026-07-20-loan-disbursement-payments/`
 
 ---
 
@@ -476,30 +395,31 @@ Dashboard con préstamo activo:
 
 | Fase | Channel | Frontend | Backend | Tablas Nuevas | Acum. |
 |------|---------|----------|---------|---------------|-------|
-| **0** ✅ | — | Login, Register | Identity Module | 2 (users, roles) | 2 |
-| **1** | — | — | Infra compartida | 2 (audit_logs, system_configurations) | 4 |
-| **2** ⭐ | **WhatsApp** | Widget Landing | WhatsApp Cloud + Chatbot AI | 4 (whatsapp_contacts, conversations, messages, chatbot_sessions) | 8 |
-| **3** | **Portal** | Dashboard, Perfil, Docs | Customers Module | 10 (customers, customer_documents, addresses, phones, emails, employment, income, bank_accounts, loan_simulations, portal_actions) | 18 |
-| **4** | **Portal** | Apply Loan, Track | Loan Products + Applications | 4 (loan_products, loan_applications, loan_reviews, approval_tasks) | 22 |
-| **5** | **Portal** | My Loans, Pay | Loans + Payments | 5 (loans, loan_accounts, installments, loan_transactions, payments) | 27 |
-| **6** | **Portal** | Document Viewer | Legal Docs | 2 (document_templates, generated_documents) | 29 |
-| **7** | **Admin** | Admin Panel | Admin Backoffice | 1 (admin_notes) | **30** |
+| **0** ✅ | — | Login, Register | Identity Module | 3 (users, roles, failed_login_attempts) | 3 |
+| **1** ✅ | — | — | Infra compartida | 2 (audit_logs, system_configurations) | 5 |
+| **2** ✅ | **WhatsApp + Portal** | Landing, Dashboard, Profile, Docs, Simulator | Customers + WhatsApp Schema | 14 (customers, addresses, phones, emails, employment, incomes, bank_accounts, documents, loan_simulations, portal_actions, whatsapp_contacts, conversations, messages, chatbot_sessions) | 19 |
+| **3** ✅ | — | — | *(merged con Fase 2)* | 0 | 19 |
+| **4** ✅ | **Portal + Admin** | Apply, List, Track, Admin Review | Loans: Application + Admin Review | 1 (loan_applications) | **20** |
+| **5** ✅ | **Portal** | My Loans, Pay | Loans + Payments | 3 (Loan, Installment, LoanTransaction — simplified) | **23** |
+| **6** | **Portal** | Document Viewer | Legal Docs | 2 (document_templates, generated_documents) | 27 |
+| **7** | **Admin** | Admin Panel | Admin Backoffice | 3 (loan_products, approval_tasks, admin_notes) | **30** |
 
 ---
 
 ## Tiempo Estimado
 
-| Fase | Tiempo |
-|------|--------|
-| Fase 1 — Fundación | 1 semana |
-| Fase 2 — WhatsApp + Chatbot ⭐ | 2-3 semanas |
-| Fase 3 — Portal Core + Clientes | 2-3 semanas |
-| Fase 4 — Solicitud y Evaluación | 2 semanas |
-| Fase 5 — Préstamos y Pagos | 2-3 semanas |
-| Fase 6 — Documentos Legales | 1 semana |
-| Fase 7 — Admin Backoffice | 2-3 semanas |
-| **Total restante** | **12-16 semanas** |
-| **Total acumulado** | **~4 meses** |
+| Fase | Tiempo | Estado |
+|------|--------|--------|
+| Fase 0 — Identity & Auth | — | ✅ **Completado** |
+| Fase 1 — Fundación | 1 semana | ✅ **Completado** |
+| Fase 2 — Portal + WhatsApp + Clientes | 2-3 semanas | ✅ **Completado** |
+| Fase 3 — Portal Core | *(merged)* | ✅ **Completado** |
+| Fase 4 — Solicitud y Evaluación | 2 semanas | ✅ **Completado** |
+| Fase 5 — Préstamos y Pagos | 2-3 semanas | ✅ **Completado** |
+| Fase 6 — Documentos Legales | 1 semana | 🚧 En progreso |
+| Fase 7 — Admin Backoffice | 2-3 semanas | 📅 Pendiente |
+| **Total restante** | **3-5 semanas** | |
+| **Total ejecutado** | **~8 semanas** | ✅ |
 
 ---
 

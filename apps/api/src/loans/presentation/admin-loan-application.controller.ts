@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 
 import type {
@@ -26,6 +27,7 @@ import { AdminGuard } from './admin.guard';
 
 import { ReviewApplicationHandler } from '../application/review-application/review-application.handler';
 import { ListPendingApplicationsHandler } from '../application/list-pending-applications/list-pending-applications.handler';
+import { DisburseLoanHandler } from '../application/disburse-loan/disburse-loan.handler';
 import { ADMIN_QUERY } from '../application/ports/admin-query.port';
 import type { AdminQuery } from '../application/ports/admin-query.port';
 import { LoanNotFoundError } from '../domain/loan-application.errors';
@@ -38,6 +40,8 @@ export class AdminLoanApplicationController {
     private readonly listPendingHandler: ListPendingApplicationsHandler,
     @Inject(ReviewApplicationHandler)
     private readonly reviewHandler: ReviewApplicationHandler,
+    @Inject(DisburseLoanHandler)
+    private readonly disburseHandler: DisburseLoanHandler,
     @Inject(ADMIN_QUERY)
     private readonly adminQuery: AdminQuery,
   ) {}
@@ -89,5 +93,14 @@ export class AdminLoanApplicationController {
     @Body(new ZodValidationPipe(ReviewApplicationSchema.required({ message: true }))) body: { message: string },
   ) {
     return this.reviewHandler.execute(user.sub, id, 'request-info', body);
+  }
+
+  @Post(':id/disburse')
+  @HttpCode(201)
+  disburse(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+  ) {
+    return this.disburseHandler.execute(user.sub, id);
   }
 }

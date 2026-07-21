@@ -3,7 +3,7 @@ type: Reference
 title: Technology Stack
 description: Stack tecnológico completo con versiones y justificación.
 tags: [stack, technology, decisions]
-timestamp: 2026-07-16T12:00:00-04:00
+timestamp: 2026-07-20T12:00:00-04:00
 ---
 
 # Technology Stack

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { AdminApplicationDetail } from '@prestamos/shared';
+import type { AdminApplicationDetail, DisburseLoanResponse } from '@prestamos/shared';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/ui/card';
 import { Badge } from '@/components/atoms/ui/badge';
 import { Button } from '@/components/atoms/ui/button';
@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/atoms/ui/dialog';
 import { Loader2, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { DisbursementButton } from './disbursement-button';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   DRAFT:          { label: 'Borrador', className: 'bg-gray-100 text-gray-700' },
@@ -54,6 +55,7 @@ export interface AdminLoanReviewProps {
   onReject: (reason: string) => Promise<void>;
   onRequestInfo: (message: string) => Promise<void>;
   onAssign: () => Promise<void>;
+  onDisburse?: (applicationId: string) => Promise<DisburseLoanResponse | null>;
   isProcessing: boolean;
 }
 
@@ -63,6 +65,7 @@ export function AdminLoanReview({
   onReject,
   onRequestInfo,
   onAssign,
+  onDisburse,
   isProcessing,
 }: AdminLoanReviewProps) {
   const { application, customer, totalMonthlyIncome, dti } = detail;
@@ -328,6 +331,21 @@ export function AdminLoanReview({
                   </DialogContent>
                 </Dialog>
               </div>
+            </CardContent>
+          </Card>
+        ) : application.status === 'APPROVED' && onDisburse ? (
+          <Card>
+            <CardHeader><CardTitle>Desembolso</CardTitle></CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Esta solicitud está aprobada. Podés desembolsar el préstamo para que el cliente
+                reciba los fondos y se active el cronograma de pagos.
+              </p>
+              <DisbursementButton
+                applicationId={application.id}
+                amount={application.amount}
+                onDisburse={onDisburse}
+              />
             </CardContent>
           </Card>
         ) : null}
