@@ -6,6 +6,7 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { CustomersModule } from './customers/customers.module';
 import { PublicModule } from './public/public.module';
 import { LoansModule } from './loans/loans.module';
+import { BackofficeModule } from './backoffice/backoffice.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { LoansModule } from './loans/loans.module';
     WhatsAppModule,
     PublicModule,
     LoansModule,
+    BackofficeModule,
   ],
 })
 export class AppModule {}
