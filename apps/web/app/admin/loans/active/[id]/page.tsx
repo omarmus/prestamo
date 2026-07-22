@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import type { AdminActiveLoanDetail } from '@prestamos/shared';
 import { useAdminPayments } from '@/features/admin/hooks/use-admin-payments';
 import { AdminLoanActiveDetail } from '@/features/admin/components/admin-loan-active-detail';
+import { NotesSection } from '@/features/admin/components/notes-section';
 import { Button } from '@/components/atoms/ui/button';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
@@ -59,7 +60,7 @@ export default function AdminActiveLoanDetailPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 space-y-6">
       <div className="mb-6">
         <Button variant="ghost" onClick={() => window.location.href = '/admin/loans/active'}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -71,6 +72,7 @@ export default function AdminActiveLoanDetailPage() {
         onRegisterPayment={handleRegisterPayment}
         isProcessing={isProcessing}
       />
+      <NotesSection entityType="LOAN" entityId={detail.loan.id} />
     </div>
   );
 }

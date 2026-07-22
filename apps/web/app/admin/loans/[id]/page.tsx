@@ -6,6 +6,7 @@ import type { AdminApplicationDetail } from '@prestamos/shared';
 import { useAdminLoans } from '@/features/admin/hooks/use-admin-loans';
 import { useAdminPayments } from '@/features/admin/hooks/use-admin-payments';
 import { AdminLoanReview } from '@/features/admin/components/admin-loan-review';
+import { NotesSection } from '@/features/admin/components/notes-section';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminLoanReviewPage() {
@@ -91,7 +92,7 @@ export default function AdminLoanReviewPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 space-y-6">
       <AdminLoanReview
         detail={detail}
         onApprove={handleApprove}
@@ -101,6 +102,7 @@ export default function AdminLoanReviewPage() {
         onDisburse={handleDisburse}
         isProcessing={isProcessing}
       />
+      <NotesSection entityType="APPLICATION" entityId={detail.application.id} />
     </div>
   );
 }
