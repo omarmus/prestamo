@@ -15,7 +15,6 @@ import type { JwtService } from '../../identity/application/ports/jwt-service.po
 import type { RefreshTokenService } from '../../identity/application/ports/refresh-token-service.port';
 import type { CustomerCreatorPort } from '../../customers/application/ports/customer-creator.port';
 import { CUSTOMER_CREATOR } from '../../customers/customers.tokens';
-import { ChatbotSession } from '../domain/chatbot-session.entity';
 
 @Injectable()
 export class CompleteRegistrationHandler {
@@ -38,17 +37,12 @@ export class CompleteRegistrationHandler {
     );
   }
 
-  async execute(session: ChatbotSession): Promise<string> {
-    const command = RegisterCommand.fromPhone(
-      session.phone,
-      session.data.name ?? session.phone,
-      session.data.email ?? undefined,
-    );
-
+  async execute(phone: string, name: string, documentNumber: string, email?: string): Promise<string> {
+    const command = RegisterCommand.fromPhone(phone, name, documentNumber, email);
     const result = await this.registerHandler.execute(command);
 
     // Link WhatsAppContact to new user
-    const contact = await this.contactRepo.findByPhone(session.phone);
+    const contact = await this.contactRepo.findByPhone(phone);
     if (contact) {
       contact.linkUser(result.user.id);
       await this.contactRepo.save(contact);

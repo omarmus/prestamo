@@ -72,8 +72,9 @@ export class PrismaCustomerRepository implements CustomerRepository {
       userId: record.userId,
       firstName: record.firstName,
       lastName: record.lastName,
-      documentType: record.documentType,
-      documentNumber: record.documentNumber,
+      // ponytail: existing records may have null document fields; default to CI and empty string
+      documentType: record.documentType ?? 'CI',
+      documentNumber: record.documentNumber ?? '',
       birthDate: record.birthDate,
       gender: record.gender,
       maritalStatus: record.maritalStatus,

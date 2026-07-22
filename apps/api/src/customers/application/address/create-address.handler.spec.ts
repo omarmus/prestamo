@@ -26,7 +26,7 @@ describe('CreateAddressHandler', () => {
 
   describe('scenario 1: success', () => {
     it('creates address with correct customerId', async () => {
-      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan' });
+      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' });
       mockRepo.findByUserId.mockResolvedValue(customer);
       const createdAddress = { id: 'addr-1', customerId: customer.id, city: 'La Paz', isPrimary: true };
       mockPrisma.customerAddress.create.mockResolvedValue(createdAddress);

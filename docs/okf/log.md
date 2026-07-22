@@ -121,6 +121,30 @@
 - **Dashboard page**: hook use-admin-stats (fetch GET /api/admin/stats), DashboardMetrics component con 5 tarjetas (Solicitudes, Pendientes, Activos, Desembolsado, Clientes).
 - **Nested <main> fix**: 4 páginas admin existentes convertidas de `<main>` a `<div>` para evitar anidación.
 
+## 2026-07-22
+
+### Migración Chatbot WhatsApp a Mastra AI Framework
+- **3 PRs completados**: Foundation → Tools + Migration → Workflows + Cleanup
+- **Nuevo**: `apps/api/mastra/` con agente "Asistente de Préstamos" + 7 tools + 2 workflows
+  - Tools: register-customer, get-customer-by-phone, check-loan-application, check-loan-status, check-next-installment, create-loan-application, simulate-loan
+  - Workflows: customer-registration, loan-application (single-step, orquestación)
+  - Memory: Mastra Memory con LibSQL + working memory template en español
+  - NestJS integration via `@mastra/nestjs`
+- **Eliminados**: ~12 archivos legacy (FSM manual, handlers, Redis stores, AI HTTP service)
+- **Preservados**: entidades de dominio (WhatsAppContact, WhatsAppConversation, WhatsAppMessage), MetaHttpService legacy
+- **Bug fix**: Symbol() duplication de ACTIVE_LOAN_QUERY en loans module
+- **Tests**: 249 pasando, 2 pre-existing DB integration failures
+- **Stack**: @mastra/core@1.51.0, @mastra/nestjs@0.2.7, @mastra/memory@1.23.0, @mastra/libsql@1.16.0
+
+### Fase 6 — Documentos Legales (completada)
+- Generación de contratos PDF con pdfkit
+- Descarga desde portal y admin
+- SDD archive completado
+
+### Fase 7 — Admin Backoffice (completada)
+- Dashboard, customer browser, notas internas, user management
+- Todos los endpoints verificados con curl
+
 ## 2026-07-20
 
 ### OKF Wiki — Actualización completa

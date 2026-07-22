@@ -17,6 +17,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [documentNumber, setDocumentNumber] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +26,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     e.preventDefault();
     setError('');
 
-    const parsed = RegisterSchema.safeParse({ email, password, name, phone: phone || undefined });
+    const parsed = RegisterSchema.safeParse({ email, password, name, phone, documentNumber });
     if (!parsed.success) {
       setError(parsed.error.errors[0]?.message ?? 'Datos inválidos');
       return;
@@ -79,6 +80,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               placeholder="+591 6XXXXXXX"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="documentNumber">Cédula de Identidad</Label>
+            <Input
+              id="documentNumber"
+              placeholder="12345678"
+              value={documentNumber}
+              onChange={(e) => setDocumentNumber(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">

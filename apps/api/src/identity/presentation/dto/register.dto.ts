@@ -5,5 +5,7 @@ export class RegisterDto {
   password!: string;
   name!: string;
   phone!: string;
+  documentType?: string;
+  documentNumber!: string;
   role?: 'USER' | 'ADMIN';
 }

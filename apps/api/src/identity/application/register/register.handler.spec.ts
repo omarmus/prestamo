@@ -78,6 +78,8 @@ describe('RegisterHandler', () => {
         'password123',
         'Test User',
         '+59161234567',
+        'CI',
+        '12345678',
       );
 
       const result = await handler.execute(command);
@@ -104,6 +106,8 @@ describe('RegisterHandler', () => {
         'password123',
         'Test User',
         '+59161234567',
+        'CI',
+        '12345678',
       );
 
       await expect(handler.execute(command)).rejects.toThrow(UserAlreadyExistsError);
@@ -125,7 +129,7 @@ describe('RegisterHandler', () => {
       mockJwtService.sign.mockResolvedValue({ accessToken: 'jwt.access.token' });
       mockRefreshTokenService.generate.mockResolvedValue('refresh-token-id');
 
-      const command = RegisterCommand.fromPhone('+59171234567', 'Juan Perez');
+      const command = RegisterCommand.fromPhone('+59171234567', 'Juan Perez', '12345678');
 
       const result = await handler.execute(command);
 
@@ -141,7 +145,7 @@ describe('RegisterHandler', () => {
       const existingUser = createMockUser();
       mockUserRepo.findByPhone.mockResolvedValue(existingUser);
 
-      const command = RegisterCommand.fromPhone('+59161234567', 'Test User');
+      const command = RegisterCommand.fromPhone('+59161234567', 'Test User', '12345678');
 
       await expect(handler.execute(command)).rejects.toThrow(UserAlreadyExistsError);
       expect(mockUserRepo.save).not.toHaveBeenCalled();

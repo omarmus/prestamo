@@ -26,7 +26,7 @@ describe('UploadDocumentHandler', () => {
 
   describe('scenario 1: success', () => {
     it('creates document with correct data', async () => {
-      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan' });
+      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' });
       mockRepo.findByUserId.mockResolvedValue(customer);
       const createdDoc = {
         id: 'doc-1',

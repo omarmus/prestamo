@@ -41,7 +41,7 @@ describe('CreateSimulationHandler', () => {
 
   describe('scenario 1: success', () => {
     it('returns simulation result with schedule', async () => {
-      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan' });
+      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' });
       mockRepo.findByUserId.mockResolvedValue(customer);
       mockPrisma.loanSimulation.create.mockResolvedValue({
         id: 'sim-1',

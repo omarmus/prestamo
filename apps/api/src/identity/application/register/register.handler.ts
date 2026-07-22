@@ -57,7 +57,7 @@ export class RegisterHandler {
     await this.userRepository.save(user);
 
     // 7. Create Customer record for the new user
-    const customer = Customer.createFromUser(user);
+    const customer = Customer.createFromUser(user, command.documentType, command.documentNumber);
     await this.customerCreator.create(customer);
 
     // 8. Generate tokens

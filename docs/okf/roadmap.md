@@ -416,10 +416,10 @@ Componentes: ActiveLoanList, ActiveLoanDetail, DisbursementButton, PaymentDialog
 | Fase 3 — Portal Core | *(merged)* | ✅ **Completado** |
 | Fase 4 — Solicitud y Evaluación | 2 semanas | ✅ **Completado** |
 | Fase 5 — Préstamos y Pagos | 2-3 semanas | ✅ **Completado** |
-| Fase 6 — Documentos Legales | 1 semana | 🚧 En progreso |
-| Fase 7 — Admin Backoffice | 2-3 semanas | 📅 Pendiente |
-| **Total restante** | **3-5 semanas** | |
-| **Total ejecutado** | **~8 semanas** | ✅ |
+| Fase 6 — Documentos Legales | 1 semana | ✅ **Completado** |
+| Fase 7 — Admin Backoffice | 2-3 semanas | ✅ **Completado** |
+| **WhatsApp Bot** — Migrado a Mastra AI | — | ✅ **Completado** |
+| **MVP Completo** | **~10 semanas** | ✅ |
 
 ---
 

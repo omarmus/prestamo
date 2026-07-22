@@ -89,8 +89,8 @@ model Customer {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   firstName     String
   lastName      String?
-  documentType  String?
-  documentNumber String?
+  documentType  String  @default("CI")
+  documentNumber String
   birthDate     DateTime?
   gender        String?
   maritalStatus String?
@@ -417,6 +417,20 @@ model LoanTransaction {
 
   @@index([loanId])
   @@index([createdAt])
+}
+
+model WhatsAppLoanDraft {
+  id         String   @id @default(uuid())
+  phone      String
+  amount     Decimal  @db.Decimal(18, 2)
+  termMonths Int
+  purpose    String
+  status     String   @default("draft")
+  userId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([phone])
 }
 
 enum DocumentType {

@@ -26,7 +26,7 @@ describe('CustomerGuard', () => {
   });
 
   it('returns true when customer exists and attaches to request', async () => {
-    const customer = Customer.create({ userId: 'user-id', firstName: 'Juan' });
+    const customer = Customer.create({ userId: 'user-id', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' });
     const request: Record<string, unknown> = { user: { sub: 'user-id' } };
     mockGetRequest.mockReturnValue(request);
     mockRepo.findByUserId.mockResolvedValue(customer);

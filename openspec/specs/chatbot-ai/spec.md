@@ -1,119 +1,116 @@
-# Chatbot AI Specification
+# Chatbot AI Specification (Mastra Agent)
 
 ## Purpose
 
-Specify the conversational AI chatbot for WhatsApp: intent detection, session management, AI integration, and structured fallback to menus.
+Specify the WhatsApp chatbot AI behavior using the Mastra AI Framework agent: intent classification, tool-based action execution, conversational memory, and graceful degradation.
 
 ## Requirements
 
-### Requirement: Session Management
-
-Every incoming message MUST map to a chatbot session keyed by sender phone. Each session MUST track `intent`, `state`, and `data_collected`. Sessions MUST expire after 30 minutes of inactivity.
-
-#### Scenario: New conversation
-
-- GIVEN a first message from `+59171234567`
-- WHEN the chatbot processes it
-- THEN a new session is created with `intent=HELP`, `state=initial`
-
-#### Scenario: Session timeout
-
-- GIVEN a session idle for 30+ minutes
-- WHEN a new message arrives
-- THEN the old session is discarded and a new one starts
-
 ### Requirement: Intent Routing
 
-The system MUST classify messages into one of four intents: `REGISTER`, `APPLY_LOAN`, `CHECK_STATUS`, or `HELP`. Classification SHOULD use the AI API first, with keyword matching as fallback.
+The system MUST classify messages into one of five intents: `REGISTER`, `APPLY_LOAN`, `CHECK_STATUS`, `ACTIVE_LOAN`, or `HELP`. The Mastra agent SHALL select the appropriate tool based on LLM classification of conversation context. Previously 4 intents via AI API + keyword fallback; now 5 intents via Mastra agent tool selection.
 
-#### Scenario: AI classifies intent
-
+#### Scenario: Agent selects REGISTER tool
 - GIVEN a message "Quiero registrarme"
-- WHEN classified by AI
-- THEN intent is `REGISTER`, state advances to `collecting_name`
+- WHEN the Mastra agent processes it
+- THEN the agent selects the `registerCustomer` tool and advances to `collecting_name`
 
-#### Scenario: Keyword fallback
-
-- GIVEN the AI API is unavailable
-- WHEN a message contains "registro"
-- THEN keyword matching classifies as `REGISTER`
+#### Scenario: Agent selects ACTIVE_LOAN tool
+- GIVEN a message "¿Cómo va mi préstamo actual?"
+- WHEN the Mastra agent processes it
+- THEN the agent selects the `checkActiveLoan` tool
 
 #### Scenario: Unrecognized message
+- GIVEN the agent cannot determine intent with confidence
+- WHEN processing a message
+- THEN it responds with the numbered menu, intent remains `HELP`
 
-- GIVEN no intent matched and AI is unavailable
-- WHEN the chatbot processes it
-- THEN it responds with a numbered menu, intent remains `HELP`
+### Requirement: ACTIVE_LOAN Intent
 
-### Requirement: REGISTER Intent
+The system MUST respond to `ACTIVE_LOAN` by looking up the user's current active loan and returning details (amount, remaining balance, next payment, status). If no active loan exists, MUST inform the user and offer CHECK_STATUS.
 
-REGISTER MUST collect `name`, optional `email`, and `phone` (from WhatsApp), then create a customer record. Each step MUST validate before advancing.
+#### Scenario: Active loan found
+- GIVEN a registered user with a loan in `disbursed` status
+- WHEN the Mastra agent selects the ACTIVE_LOAN tool
+- THEN it returns principal, remaining balance, next payment date, and loan status
 
-#### Scenario: Complete flow
+#### Scenario: No active loan
+- GIVEN a registered user with no active loans
+- WHEN the agent selects ACTIVE_LOAN tool
+- THEN it responds "no tienes un préstamo activo" and offers to check past applications
 
-- GIVEN intent `REGISTER`, empty `data_collected`
-- WHEN the user provides name, then email (or skip)
-- THEN `data_collected` is populated stepwise
-- AND the chatbot confirms before creating the customer
+### Requirement: Agent Tools
 
-#### Scenario: Invalid input rejected
+A Mastra agent MUST expose 7 tools — `register-customer`, `get-customer-by-phone`, `check-loan-application`, `check-loan-status`, `check-next-installment`, `create-loan-application`, and `simulate-loan` — each invoking its corresponding NestJS handler via the DI Bridge pattern. Tools MUST NOT duplicate domain logic; they SHALL delegate to existing module services (customers, loans, identity).
 
-- GIVEN the chatbot expects a name
-- WHEN the user sends a blank response
-- THEN the chatbot asks again, state does not advance
+#### Scenario: Tool delegates to NestJS service
+- GIVEN a user with valid registration data
+- WHEN `register-customer` tool executes
+- THEN it calls `CompleteRegistrationHandler.execute()` and returns the result
 
-### Requirement: APPLY_LOAN Intent
-
-APPLY_LOAN MUST collect `amount`, `term_months`, and `purpose` then create a `loan_application` with status `draft`. Unregistered users MUST be redirected to REGISTER first.
-
-#### Scenario: Registered user applies
-
-- GIVEN a registered user with intent `APPLY_LOAN`
-- WHEN they provide amount, term, and purpose
-- THEN a `loan_application` is created as `draft`
-
-#### Scenario: Unregistered user redirected
-
-- GIVEN an unregistered user selecting APPLY_LOAN
-- THEN intent changes to `REGISTER` with a notification
-
-### Requirement: CHECK_STATUS Intent
-
-CHECK_STATUS MUST look up the user's latest `loan_application` and return its status. If none exists, the chatbot MUST offer APPLY_LOAN.
-
-#### Scenario: Application found
-
-- GIVEN a registered user with a `loan_application` in `review`
-- WHEN they select CHECK_STATUS
-- THEN the chatbot returns the status and estimated time
-
-#### Scenario: No application
-
-- GIVEN a registered user with no loan applications
-- WHEN they select CHECK_STATUS
-- THEN the chatbot offers to start a new application
+#### Scenario: Tool returns error from service
+- GIVEN a service throws an error
+- WHEN a tool calls the service
+- THEN the tool returns the error message to the agent
+- AND the agent generates a user-friendly response
 
 ### Requirement: AI Integration
 
-AI API (Claude/GPT) MAY classify intents and generate responses. Calls MUST be rate-limited per session (max 10 per 5 min). Timeout (5s) or errors MUST degrade to rule-based menu responses.
+The Mastra agent SHALL use its LLM for intent classification and response generation. Tool calls MUST have a configurable timeout. Timeouts or LLM errors MUST degrade to rule-based menu responses.
 
-#### Scenario: AI call succeeds
-
+#### Scenario: Tool call succeeds
 - GIVEN a user message
-- WHEN the AI responds within 5s
-- THEN the chatbot uses the AI response
+- WHEN the agent calls a tool within timeout
+- THEN the agent uses the tool's structured response to reply
 
-#### Scenario: AI timeout
+#### Scenario: Agent timeout
+- GIVEN the agent LLM does not respond within the configured timeout
+- WHEN processing the message
+- THEN a structured menu is returned and the error is logged
 
-- GIVEN the AI does not respond within 5s
-- WHEN the chatbot processes the message
-- THEN a structured menu is returned, error is logged
+### Requirement: Conversational Memory
 
-### Requirement: HELP Intent
+The system MUST maintain conversation context per phone number using Mastra Memory with LibSQL backend. Working memory SHALL track client profile, session state, and active loan data. Threads SHALL be identified by phone number.
 
-HELP MUST display a numbered menu of available options: registration, loan application, and status check.
+#### Scenario: Memory persists across messages
+- GIVEN a user sends "Mi nombre es Juan" in message 1
+- AND the agent updates working memory
+- WHEN the user sends "¿Puedo solicitar un préstamo?" in message 2
+- THEN the agent recalls the name from working memory without re-prompting
 
-#### Scenario: Help menu displayed
+#### Scenario: New conversation starts fresh
+- GIVEN a new phone number sends a message
+- WHEN no thread exists for that number
+- THEN a new thread is created
+- AND the working memory is initialized with defaults
 
-- GIVEN a user in `HELP` intent
-- WHEN the chatbot processes any message
-- THEN it replies with a numbered menu and waits for selection
+### Requirement: DI Bridge Pattern
+
+Tools MUST receive NestJS dependencies via factory functions (DI Bridge pattern), not via global singletons or request context. A `useFactory` in the WhatsApp module SHALL construct the Mastra agent with already-resolved dependencies.
+
+#### Scenario: Module creates agent with injected handlers
+- GIVEN a `@Inject(COMPLETE_REGISTRATION_HANDLER)` in the module factory
+- WHEN `createMastra()` is called
+- THEN every tool has access to its handler via closure
+- AND no global state is required
+
+## User Stories
+
+- **Como usuario**, quiero consultar mi préstamo activo por WhatsApp, para saber cuánto debo y cuándo vence mi próxima cuota.
+- **Como administrador**, quiero que el chatbot delegue a servicios NestJS existentes, para no duplicar lógica de negocio.
+
+## Acceptance Criteria
+
+- [ ] Mastra agent responde a los 5 intents correctamente con sus tools
+- [ ] ACTIVE_LOAN muestra datos reales del préstamo desde LoansService
+- [ ] Timeout de 10s degrada a menú sin crashear
+- [ ] Cada tool invoca su servicio NestJS sin duplicar lógica
+- [ ] `pnpm type-check` (api) y `pnpm build` pasan limpios
+- [ ] Conversational memory mantiene estado entre mensajes de una misma sesión
+
+## Out of Scope
+
+- Cambios en entidades de dominio (Contact, Conversation, Message)
+- Repositorios Prisma de chatbots/contactos
+- Dashboard admin de conversaciones
+- Lógica de negocio de customers o loans modules

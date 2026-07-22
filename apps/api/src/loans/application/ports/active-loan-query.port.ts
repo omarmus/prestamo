@@ -1,8 +1,8 @@
 // ponytail: Query interfaces return plain objects, not entities. The implementations (Prisma queries)
 // map directly to the response shape. Add pagination params when the list grows.
 
-export const ACTIVE_LOAN_QUERY = Symbol('ACTIVE_LOAN_QUERY');
-export const ADMIN_ACTIVE_LOAN_QUERY = Symbol('ADMIN_ACTIVE_LOAN_QUERY');
+// Re-export from canonical tokens file to ensure single Symbol instances
+export { ACTIVE_LOAN_QUERY, ADMIN_ACTIVE_LOAN_QUERY } from '../../loans.tokens';
 
 export interface ActiveLoanSummary {
   id: string;

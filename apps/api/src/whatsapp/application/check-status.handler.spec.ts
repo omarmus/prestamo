@@ -1,30 +1,35 @@
 import { CheckStatusHandler } from './check-status.handler';
-import type { LoanApplicationRepository } from '../domain/loan-application-repository.port';
-import { LoanApplication } from '../domain/loan-application.entity';
+
+function makePrismaMock() {
+  return {
+    whatsAppLoanDraft: {
+      findFirst: jest.fn(),
+    },
+  };
+}
 
 describe('CheckStatusHandler', () => {
   let handler: CheckStatusHandler;
-  let mockLoanRepo: jest.Mocked<LoanApplicationRepository>;
+  let mockPrisma: ReturnType<typeof makePrismaMock>;
 
   beforeEach(() => {
-    mockLoanRepo = {
-      save: jest.fn(),
-      findByPhone: jest.fn(),
-      findById: jest.fn(),
-    };
-    handler = new CheckStatusHandler(mockLoanRepo);
+    mockPrisma = makePrismaMock();
+    handler = new CheckStatusHandler(mockPrisma as never);
   });
 
   describe('execute with existing loan application', () => {
     it('returns application status', async () => {
-      const app = LoanApplication.create({
+      mockPrisma.whatsAppLoanDraft.findFirst.mockResolvedValue({
+        id: 'loan-1',
         phone: '+59171234567',
         amount: 5000,
         termMonths: 12,
         purpose: 'Negocio',
         status: 'draft',
+        userId: null,
+        createdAt: new Date('2025-01-15'),
+        updatedAt: new Date('2025-01-15'),
       });
-      mockLoanRepo.findByPhone.mockResolvedValue(app);
 
       const result = await handler.execute('+59171234567');
 
@@ -34,14 +39,17 @@ describe('CheckStatusHandler', () => {
     });
 
     it('shows different messages per status', async () => {
-      const app = LoanApplication.create({
+      mockPrisma.whatsAppLoanDraft.findFirst.mockResolvedValue({
+        id: 'loan-1',
         phone: '+59171234567',
         amount: 3000,
         termMonths: 6,
         purpose: 'Salud',
         status: 'review',
+        userId: null,
+        createdAt: new Date('2025-01-15'),
+        updatedAt: new Date('2025-01-15'),
       });
-      mockLoanRepo.findByPhone.mockResolvedValue(app);
 
       const result = await handler.execute('+59171234567');
 
@@ -52,7 +60,7 @@ describe('CheckStatusHandler', () => {
 
   describe('execute without loan application', () => {
     it('returns hasApplication false when no loan exists', async () => {
-      mockLoanRepo.findByPhone.mockResolvedValue(null);
+      mockPrisma.whatsAppLoanDraft.findFirst.mockResolvedValue(null);
 
       const result = await handler.execute('+59171234567');
 

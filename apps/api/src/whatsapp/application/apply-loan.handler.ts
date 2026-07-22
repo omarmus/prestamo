@@ -1,10 +1,17 @@
+import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-
-import type { LoanApplicationRepository } from '../domain/loan-application-repository.port';
-import { LoanApplication } from '../domain/loan-application.entity';
+import { PrismaService } from '../../shared/prisma/prisma.service';
 import type { ContactRepository } from '../domain/contact-repository.port';
-import { LOAN_APPLICATION_REPOSITORY, CONTACT_REPOSITORY } from '../whatsapp.tokens';
-import type { ChatbotSessionData } from '../domain/chatbot-session.entity';
+import { CONTACT_REPOSITORY } from '../whatsapp.tokens';
+
+// ponytail: Inline type formerly from ChatbotSession entity, now deleted.
+export interface LoanApplicationData {
+  name?: string;
+  email?: string;
+  amount?: number;
+  termMonths?: number;
+  purpose?: string;
+}
 
 export interface ApplyLoanResult {
   applicationId: string;
@@ -15,33 +22,29 @@ export interface ApplyLoanResult {
 @Injectable()
 export class ApplyLoanHandler {
   constructor(
-    @Inject(LOAN_APPLICATION_REPOSITORY) private readonly loanRepo: LoanApplicationRepository,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CONTACT_REPOSITORY) private readonly contactRepo: ContactRepository,
   ) {}
 
-  async execute(phone: string, data: ChatbotSessionData): Promise<ApplyLoanResult> {
+  async execute(phone: string, data: LoanApplicationData): Promise<ApplyLoanResult> {
+    const id = randomUUID();
     const amount = data.amount ?? 0;
     const termMonths = data.termMonths ?? 0;
     const purpose = data.purpose ?? '';
 
-    const application = LoanApplication.create({
-      phone,
-      amount,
-      termMonths,
-      purpose,
-      status: 'draft',
-    });
-
     // Link user if contact has one
+    let userId: string | null = null;
     const contact = await this.contactRepo.findByPhone(phone);
     if (contact?.userId) {
-      application.linkUser(contact.userId);
+      userId = contact.userId;
     }
 
-    await this.loanRepo.save(application);
+    await this.prisma.whatsAppLoanDraft.create({
+      data: { id, phone, amount, termMonths, purpose, status: 'draft', userId },
+    });
 
     return {
-      applicationId: application.id,
+      applicationId: id,
       status: 'draft',
       message:
         `✅ *Solicitud registrada exitosamente*\n\n` +
@@ -49,7 +52,7 @@ export class ApplyLoanHandler {
         `*Plazo:* ${termMonths} meses\n` +
         `*Propósito:* ${purpose}\n` +
         `*Estado:* Recibida — un asesor revisará tu solicitud y te contactará pronto.\n\n` +
-        `Guarda tu ID de solicitud: \`${application.id.slice(0, 8)}…\``,
+        `Guarda tu ID de solicitud: \`${id.slice(0, 8)}…\``,
     };
   }
 }

@@ -240,7 +240,7 @@ describe('ReviewApplicationHandler', () => {
     it('uses customer.monthlyIncome when no CustomerIncome records', async () => {
       mockPrisma.customerIncome.findMany.mockResolvedValue([]);
       mockCustomerRepo.findById.mockResolvedValue(
-        Customer.reconstitute({ id: 'customer-1', userId: 'user-1', firstName: 'Juan', monthlyIncome: 8000, createdAt: new Date(), updatedAt: new Date() }),
+        Customer.reconstitute({ id: 'customer-1', userId: 'user-1', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678', monthlyIncome: 8000, createdAt: new Date(), updatedAt: new Date() }),
       );
 
       const result = await handler.calculateDTI('customer-1', 2000);
@@ -254,7 +254,7 @@ describe('ReviewApplicationHandler', () => {
     it('throws InsufficientIncomeError', async () => {
       mockPrisma.customerIncome.findMany.mockResolvedValue([]);
       mockCustomerRepo.findById.mockResolvedValue(
-        Customer.reconstitute({ id: 'customer-1', userId: 'user-1', firstName: 'Juan', monthlyIncome: null, createdAt: new Date(), updatedAt: new Date() }),
+        Customer.reconstitute({ id: 'customer-1', userId: 'user-1', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678', monthlyIncome: null, createdAt: new Date(), updatedAt: new Date() }),
       );
 
       await expect(handler.calculateDTI('customer-1', 2000)).rejects.toThrow(InsufficientIncomeError);

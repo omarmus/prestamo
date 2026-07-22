@@ -5,6 +5,8 @@ export const RegisterSchema = z.object({
   password: z.string().min(8),
   name: z.string().min(2).max(100),
   phone: z.string().regex(/^\+591[67]\d{7}$/),
+  documentType: z.enum(['CI', 'PASSPORT', 'OTHER']).default('CI'),
+  documentNumber: z.string().min(5).max(30),
   role: z.enum(['USER', 'ADMIN']).optional(),
 });
 

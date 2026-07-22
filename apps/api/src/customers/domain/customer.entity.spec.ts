@@ -5,23 +5,30 @@ import { Phone } from '../../identity/domain/phone.value-object';
 describe('Customer', () => {
   describe('create', () => {
     it('creates instance with valid props', () => {
-      const customer = Customer.create({ userId: 'user-1', firstName: 'Juan' });
+      const customer = Customer.create({ userId: 'user-1', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' });
 
       expect(customer.id).toBeDefined();
       expect(customer.userId).toBe('user-1');
       expect(customer.firstName).toBe('Juan');
+      expect(customer.documentType).toBe('CI');
+      expect(customer.documentNumber).toBe('12345678');
       expect(customer.status).toBe('REGISTERED');
       expect(customer.kycStatus).toBe('NOT_STARTED');
     });
 
     it('throws when firstName is empty', () => {
-      expect(() => Customer.create({ userId: 'user-1', firstName: '' }))
+      expect(() => Customer.create({ userId: 'user-1', firstName: '', documentType: 'CI', documentNumber: '12345678' }))
         .toThrow('First name is required');
     });
 
     it('throws when userId is missing', () => {
-      expect(() => Customer.create({ userId: '', firstName: 'Juan' }))
+      expect(() => Customer.create({ userId: '', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' }))
         .toThrow('User ID is required');
+    });
+
+    it('throws when documentNumber is empty', () => {
+      expect(() => Customer.create({ userId: 'user-1', firstName: 'Juan', documentType: 'CI', documentNumber: '' }))
+        .toThrow('Document number is required');
     });
   });
 
@@ -36,10 +43,12 @@ describe('Customer', () => {
         updatedAt: new Date(),
       });
 
-      const customer = Customer.createFromUser(user);
+      const customer = Customer.createFromUser(user, 'CI', '12345678');
 
       expect(customer.userId).toBe('user-1');
       expect(customer.firstName).toBe('Juan Perez');
+      expect(customer.documentType).toBe('CI');
+      expect(customer.documentNumber).toBe('12345678');
     });
   });
 
@@ -75,11 +84,11 @@ describe('Customer', () => {
 
   describe('getters', () => {
     it('return null for optional fields not set', () => {
-      const customer = Customer.create({ userId: 'user-1', firstName: 'Juan' });
+      const customer = Customer.create({ userId: 'user-1', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' });
 
       expect(customer.lastName).toBeNull();
-      expect(customer.documentType).toBeNull();
-      expect(customer.documentNumber).toBeNull();
+      expect(customer.documentType).toBe('CI');
+      expect(customer.documentNumber).toBe('12345678');
       expect(customer.birthDate).toBeNull();
       expect(customer.gender).toBeNull();
       expect(customer.maritalStatus).toBeNull();
@@ -92,11 +101,15 @@ describe('Customer', () => {
         userId: 'user-1',
         firstName: 'Juan',
         lastName: 'Perez',
+        documentType: 'CI',
+        documentNumber: '12345678',
         monthlyIncome: 5000,
       });
 
       expect(customer.firstName).toBe('Juan');
       expect(customer.lastName).toBe('Perez');
+      expect(customer.documentType).toBe('CI');
+      expect(customer.documentNumber).toBe('12345678');
       expect(customer.monthlyIncome).toBe(5000);
     });
   });

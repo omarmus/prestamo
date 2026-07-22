@@ -6,8 +6,8 @@ export interface CustomerProps {
   userId: string;
   firstName: string;
   lastName?: string | null;
-  documentType?: string | null;
-  documentNumber?: string | null;
+  documentType: string;
+  documentNumber: string;
   birthDate?: Date | null;
   gender?: string | null;
   maritalStatus?: string | null;
@@ -22,8 +22,8 @@ export class Customer {
   private readonly _userId: string;
   private _firstName: string;
   private _lastName: string | null;
-  private _documentType: string | null;
-  private _documentNumber: string | null;
+  private _documentType: string;
+  private _documentNumber: string;
   private _birthDate: Date | null;
   private _gender: string | null;
   private _maritalStatus: string | null;
@@ -39,8 +39,8 @@ export class Customer {
     this._userId = props.userId;
     this._firstName = props.firstName;
     this._lastName = props.lastName ?? null;
-    this._documentType = props.documentType ?? null;
-    this._documentNumber = props.documentNumber ?? null;
+    this._documentType = props.documentType;
+    this._documentNumber = props.documentNumber;
     this._birthDate = props.birthDate ?? null;
     this._gender = props.gender ?? null;
     this._maritalStatus = props.maritalStatus ?? null;
@@ -59,17 +59,20 @@ export class Customer {
     if (!props.userId) {
       throw new Error('User ID is required');
     }
+    if (!props.documentNumber || props.documentNumber.trim().length < 1) {
+      throw new Error('Document number is required');
+    }
     return new Customer(props);
   }
 
   /** Create a Customer from a just-registered User. */
-  static createFromUser(user: User): Customer {
+  static createFromUser(user: User, documentType: string, documentNumber: string): Customer {
     return Customer.create({
       userId: user.id,
       firstName: user.name,
       lastName: null,
-      documentType: null,
-      documentNumber: null,
+      documentType,
+      documentNumber,
     });
   }
 
@@ -92,10 +95,10 @@ export class Customer {
   get lastName(): string | null {
     return this._lastName;
   }
-  get documentType(): string | null {
+  get documentType(): string {
     return this._documentType;
   }
-  get documentNumber(): string | null {
+  get documentNumber(): string {
     return this._documentNumber;
   }
   get birthDate(): Date | null {

@@ -82,5 +82,10 @@ import { ContractController } from './presentation/contract.controller';
     ListActiveLoansHandler,
     AdminGuard,
   ],
+  exports: [
+    ACTIVE_LOAN_QUERY,
+    INSTALLMENT_REPOSITORY,
+    LOAN_REPOSITORY,
+  ],
 })
 export class LoansModule {}

@@ -33,6 +33,8 @@ describe('CreateApplicationHandler', () => {
     return Customer.create({
       userId: overrides.userId ?? 'user-1',
       firstName: overrides.firstName ?? 'Juan',
+      documentType: 'CI',
+      documentNumber: '12345678',
       id: overrides.id ?? 'customer-1',
     });
   }

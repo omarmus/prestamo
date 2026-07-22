@@ -29,6 +29,8 @@ describe('UpdateProfileHandler', () => {
         userId: 'user-id',
         firstName: 'Juan',
         lastName: 'Perez',
+        documentType: 'CI',
+        documentNumber: '12345678',
       });
       mockRepo.findByUserId.mockResolvedValue(existing);
       mockRepo.update.mockResolvedValue(undefined);

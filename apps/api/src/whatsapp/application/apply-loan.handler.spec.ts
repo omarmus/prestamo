@@ -1,24 +1,27 @@
 import { ApplyLoanHandler } from './apply-loan.handler';
-import type { LoanApplicationRepository } from '../domain/loan-application-repository.port';
 import type { ContactRepository } from '../domain/contact-repository.port';
+
+function makePrismaMock() {
+  return {
+    whatsAppLoanDraft: {
+      create: jest.fn().mockResolvedValue({}),
+    },
+  };
+}
 
 describe('ApplyLoanHandler', () => {
   let handler: ApplyLoanHandler;
-  let mockLoanRepo: jest.Mocked<LoanApplicationRepository>;
+  let mockPrisma: ReturnType<typeof makePrismaMock>;
   let mockContactRepo: jest.Mocked<ContactRepository>;
 
   beforeEach(() => {
-    mockLoanRepo = {
-      save: jest.fn(),
-      findByPhone: jest.fn(),
-      findById: jest.fn(),
-    };
+    mockPrisma = makePrismaMock();
     mockContactRepo = {
       save: jest.fn(),
       findByPhone: jest.fn(),
       findById: jest.fn(),
     };
-    handler = new ApplyLoanHandler(mockLoanRepo, mockContactRepo);
+    handler = new ApplyLoanHandler(mockPrisma as never, mockContactRepo);
   });
 
   describe('execute', () => {
@@ -33,7 +36,7 @@ describe('ApplyLoanHandler', () => {
 
       expect(result.status).toBe('draft');
       expect(result.applicationId).toBeDefined();
-      expect(mockLoanRepo.save).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.whatsAppLoanDraft.create).toHaveBeenCalledTimes(1);
     });
 
     it('returns a confirmation message with amount and term', async () => {
@@ -66,7 +69,11 @@ describe('ApplyLoanHandler', () => {
         purpose: 'Negocio',
       });
 
-      expect(mockLoanRepo.save).toHaveBeenCalled();
+      expect(mockPrisma.whatsAppLoanDraft.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 'user-1' }),
+        }),
+      );
       expect(result.status).toBe('draft');
     });
   });

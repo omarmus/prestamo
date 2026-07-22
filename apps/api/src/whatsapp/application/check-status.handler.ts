@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-
-import type { LoanApplicationRepository } from '../domain/loan-application-repository.port';
-import { LOAN_APPLICATION_REPOSITORY } from '../whatsapp.tokens';
+import { PrismaService } from '../../shared/prisma/prisma.service';
 
 export interface CheckStatusResult {
   message: string;
@@ -11,13 +9,19 @@ export interface CheckStatusResult {
 @Injectable()
 export class CheckStatusHandler {
   constructor(
-    @Inject(LOAN_APPLICATION_REPOSITORY) private readonly loanRepo: LoanApplicationRepository,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
   ) {}
 
   async execute(phone: string): Promise<CheckStatusResult> {
-    const app = await this.loanRepo.findByPhone(phone);
+    // ponytail: Direct Prisma query. WhatsApp loan drafts are stored in the
+    // WhatsAppLoanDraft table. Once migrated to the loans module, this handler
+    // will be removed entirely.
+    const row = await this.prisma.whatsAppLoanDraft.findFirst({
+      where: { phone },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    if (!app) {
+    if (!row) {
       return {
         hasApplication: false,
         message:
@@ -45,12 +49,12 @@ export class CheckStatusHandler {
     return {
       hasApplication: true,
       message:
-        `${statusEmoji[app.status] ?? '📋'} *Estado de tu solicitud*\n\n` +
-        `*Monto:* Bs. ${app.amount}\n` +
-        `*Plazo:* ${app.termMonths} meses\n` +
-        `*Propósito:* ${app.purpose}\n` +
-        `*Estado:* ${statusLabels[app.status] ?? app.status}\n\n` +
-        `Creada: ${app.createdAt.toLocaleDateString('es-BO')}`,
+        `${statusEmoji[row.status] ?? '📋'} *Estado de tu solicitud*\n\n` +
+        `*Monto:* Bs. ${Number(row.amount)}\n` +
+        `*Plazo:* ${row.termMonths} meses\n` +
+        `*Propósito:* ${row.purpose}\n` +
+        `*Estado:* ${statusLabels[row.status] ?? row.status}\n\n` +
+        `Creada: ${row.createdAt.toLocaleDateString('es-BO')}`,
     };
   }
 }

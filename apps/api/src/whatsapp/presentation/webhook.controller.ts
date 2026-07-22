@@ -9,51 +9,40 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Mastra } from '@mastra/core/mastra';
 
-import { ReceiveMessageHandler } from '../application/receive-message.handler';
-import { RouteIntentHandler } from '../application/route-intent.handler';
-import { CompleteRegistrationHandler } from '../application/complete-registration.handler';
-import { ApplyLoanHandler } from '../application/apply-loan.handler';
-import { CheckStatusHandler } from '../application/check-status.handler';
 import type { ContactRepository } from '../domain/contact-repository.port';
 import type { ConversationRepository } from '../domain/conversation-repository.port';
 import type { MessageRepository } from '../domain/message-repository.port';
-import type { SessionStore } from '../domain/session-store.port';
 import type { MetaHttpPort } from '../application/ports/meta-http.port';
-import type { AIServicePort } from '../application/ports/ai-service.port';
-import type { LoanApplicationRepository } from '../domain/loan-application-repository.port';
+import { WhatsAppContact } from '../domain/whatsapp-contact.entity';
+import { WhatsAppConversation } from '../domain/whatsapp-conversation.entity';
+import { WhatsAppMessage } from '../domain/whatsapp-message.entity';
 import {
   META_HTTP_SERVICE,
-  AI_SERVICE,
-  SESSION_STORE,
   CONTACT_REPOSITORY,
   CONVERSATION_REPOSITORY,
   MESSAGE_REPOSITORY,
-  LOAN_APPLICATION_REPOSITORY,
 } from '../whatsapp.tokens';
+
+interface ParsedMessage {
+  phone: string;
+  text: string;
+  messageId?: string;
+  messageType: string;
+}
 
 @Controller('api/whatsapp/webhook')
 export class WebhookController {
   constructor(
     @Inject(META_HTTP_SERVICE) private readonly metaHttp: MetaHttpPort,
-    @Inject(AI_SERVICE) private readonly aiService: AIServicePort,
-    @Inject(SESSION_STORE) private readonly sessionStore: SessionStore,
     @Inject(CONTACT_REPOSITORY) private readonly contactRepo: ContactRepository,
     @Inject(CONVERSATION_REPOSITORY)
     private readonly conversationRepo: ConversationRepository,
     @Inject(MESSAGE_REPOSITORY) private readonly messageRepo: MessageRepository,
-    @Inject(CompleteRegistrationHandler)
-    private readonly completeRegistration: CompleteRegistrationHandler,
-    @Inject(ApplyLoanHandler)
-    private readonly applyLoan: ApplyLoanHandler,
-    @Inject(LOAN_APPLICATION_REPOSITORY)
-    private readonly loanRepo: LoanApplicationRepository,
+    @Inject('MASTRA') private readonly mastra: Mastra,
     @Inject(ConfigService) private readonly configService: ConfigService,
   ) {}
-
-  private getRouteIntent(): RouteIntentHandler {
-    return new RouteIntentHandler(this.aiService, this.sessionStore, new CheckStatusHandler(this.loanRepo));
-  }
 
   /**
    * Meta webhook verification challenge.
@@ -80,37 +69,110 @@ export class WebhookController {
   @Post()
   @HttpCode(200)
   async receive(@Body() payload: unknown): Promise<void> {
-    const routeIntent = this.getRouteIntent();
-    const handler = new ReceiveMessageHandler(
-      this.contactRepo,
-      this.conversationRepo,
-      this.messageRepo,
-      this.sessionStore,
-      this.metaHttp,
-      routeIntent,
-    );
+    const parsed = this.parsePayload(payload);
+    if (!parsed) return;
 
-    const result = await handler.execute(payload);
+    const { phone, text, messageId, messageType } = parsed;
 
-    // If the chatbot session completed, handle post-completion actions
-    if (result?.sessionCompleted) {
-      const session = await this.sessionStore.get(result.phone);
-      if (!session) return;
-
-      if (session.intent === 'REGISTER') {
-        try {
-          await this.completeRegistration.execute(session);
-          // ponytail: session persisted in Redis; DB audit write on session completion
-        } catch {
-          // registration failed — session already saved in Redis, user can retry
-        }
-      } else if (session.intent === 'APPLY_LOAN') {
-        try {
-          await this.applyLoan.execute(session.phone, session.data);
-        } catch {
-          // loan creation failed — user can retry
-        }
+    try {
+      // 1. Find or create contact
+      let contact = await this.contactRepo.findByPhone(phone);
+      if (!contact) {
+        contact = WhatsAppContact.create({ phone });
+        contact = await this.contactRepo.save(contact);
       }
+
+      // 2. Find or create conversation
+      let conversation = await this.conversationRepo.findActiveByContact(
+        contact.id,
+      );
+      if (!conversation) {
+        conversation = WhatsAppConversation.create({ contactId: contact.id });
+        conversation = await this.conversationRepo.save(conversation);
+      }
+
+      // 3. Log incoming message
+      await this.messageRepo.save(
+        WhatsAppMessage.createIncoming({
+          conversationId: conversation.id,
+          messageType,
+          content: text,
+          metaId: messageId,
+        }),
+      );
+
+      // 4. Call Mastra agent
+      const agent = this.mastra.getAgent('customer-support');
+      const result = await agent.generate([
+        { role: 'user', content: text },
+      ]);
+      const reply = result.text;
+
+      // 5. Send reply via MetaHttpService
+      const sendResult = await this.metaHttp.sendMessage(phone, reply);
+
+      // 6. Log outgoing message
+      await this.messageRepo.save(
+        WhatsAppMessage.createOutgoing({
+          conversationId: conversation.id,
+          messageType: 'text',
+          content: reply,
+          metaId: sendResult.metaId,
+        }),
+      );
+    } catch {
+      // ponytail: ack any error with 200 to prevent Meta retries
+    }
+  }
+
+  /** Parse Meta webhook payload into a normalised message. */
+  private parsePayload(payload: unknown): ParsedMessage | null {
+    try {
+      const body = payload as Record<string, unknown>;
+      const entry = (
+        body.entry as Array<Record<string, unknown>> | undefined
+      )?.[0];
+      const change = (
+        entry?.changes as Array<Record<string, unknown>> | undefined
+      )?.[0];
+      const value = change?.value as Record<string, unknown> | undefined;
+      const messages = (
+        value?.messages as Array<Record<string, unknown>> | undefined
+      )?.[0];
+
+      if (!messages) return null;
+
+      const contacts = (
+        value?.contacts as Array<Record<string, unknown>> | undefined
+      )?.[0];
+      const phone: string | undefined =
+        (messages.from as string) ?? (contacts?.wa_id as string);
+      if (!phone) return null;
+
+      const msgType = (messages.type as string) ?? 'text';
+      let text = '';
+
+      if (msgType === 'text') {
+        text =
+          ((messages.text as Record<string, string>)?.body ?? '') as string;
+      } else if (msgType === 'interactive') {
+        const interactive = messages.interactive as
+          | Record<string, Record<string, string>>
+          | undefined;
+        text =
+          interactive?.button_reply?.title ??
+          interactive?.list_reply?.title ??
+          '';
+      }
+
+      return {
+        phone,
+        text,
+        messageId: messages.id as string | undefined,
+        messageType: msgType,
+      };
+    } catch {
+      return null;
     }
   }
 }

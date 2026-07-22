@@ -26,7 +26,7 @@ describe('TrackActionHandler', () => {
 
   describe('scenario 1: success', () => {
     it('creates portal action', async () => {
-      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan' });
+      const customer = Customer.create({ userId: 'user-id', firstName: 'Juan', documentType: 'CI', documentNumber: '12345678' });
       mockRepo.findByUserId.mockResolvedValue(customer);
       const createdAction = {
         id: 'action-1',
