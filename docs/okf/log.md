@@ -112,6 +112,15 @@
 - **Frontend admin hook**: ruta `/assign` → `/review` (endpoint correcto del backend)
 - **Frontend response unwrap**: hook extraía `{ data }` de la respuesta axios
 
+## 2026-07-21
+
+### PR 2 — Admin Layout + Dashboard
+- **AdminSidebar**: componente de navegación lateral con 5 items (Dashboard, Solicitudes, Préstamos Activos, Clientes, Usuarios). Desktop sidebar + mobile sheet drawer. Sigue patrón de PortalSidebar.
+- **AdminLayout**: layout server component + client wrapper con auth guard, sidebar y Toaster. `<main>` wrapper centralizado — páginas ya no tienen su propio `<main>`.
+- **MetricCard**: componente reutilizable con icono, valor, label y variante skeleton. Grid responsive (2 cols desktop, 1 mobile).
+- **Dashboard page**: hook use-admin-stats (fetch GET /api/admin/stats), DashboardMetrics component con 5 tarjetas (Solicitudes, Pendientes, Activos, Desembolsado, Clientes).
+- **Nested <main> fix**: 4 páginas admin existentes convertidas de `<main>` a `<div>` para evitar anidación.
+
 ## 2026-07-20
 
 ### OKF Wiki — Actualización completa

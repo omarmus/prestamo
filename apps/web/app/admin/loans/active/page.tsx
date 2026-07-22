@@ -22,14 +22,14 @@ export default function AdminActiveLoanListPage() {
 
   if (error) {
     return (
-      <main className="p-8">
+      <div className="p-8">
         <p className="text-destructive">{error}</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="p-8">
+    <div className="p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Gestión de Pagos</h1>
         <p className="text-muted-foreground">Administrá los préstamos activos y registrá pagos</p>
@@ -41,6 +41,6 @@ export default function AdminActiveLoanListPage() {
         onFilterChange={handleFilterChange}
         onPageChange={handlePageChange}
       />
-    </main>
+    </div>
   );
 }

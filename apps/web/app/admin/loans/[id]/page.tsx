@@ -76,22 +76,22 @@ export default function AdminLoanReviewPage() {
 
   if (isLoading) {
     return (
-      <main className="flex justify-center p-8">
+      <div className="flex justify-center p-8">
         <Loader2 className="h-6 w-6 animate-spin" />
-      </main>
+      </div>
     );
   }
 
   if (error || !detail) {
     return (
-      <main className="p-8">
+      <div className="p-8">
         <p className="text-destructive">{error ?? 'Solicitud no encontrada'}</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="p-8">
+    <div className="p-8">
       <AdminLoanReview
         detail={detail}
         onApprove={handleApprove}
@@ -101,6 +101,6 @@ export default function AdminLoanReviewPage() {
         onDisburse={handleDisburse}
         isProcessing={isProcessing}
       />
-    </main>
+    </div>
   );
 }

@@ -44,22 +44,22 @@ export default function AdminActiveLoanDetailPage() {
 
   if (isLoading) {
     return (
-      <main className="flex justify-center p-8">
+      <div className="flex justify-center p-8">
         <Loader2 className="h-6 w-6 animate-spin" />
-      </main>
+      </div>
     );
   }
 
   if (error || !detail) {
     return (
-      <main className="p-8">
+      <div className="p-8">
         <p className="text-destructive">{error ?? 'Préstamo no encontrado'}</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="p-8">
+    <div className="p-8">
       <div className="mb-6">
         <Button variant="ghost" onClick={() => window.location.href = '/admin/loans/active'}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -71,6 +71,6 @@ export default function AdminActiveLoanDetailPage() {
         onRegisterPayment={handleRegisterPayment}
         isProcessing={isProcessing}
       />
-    </main>
+    </div>
   );
 }
