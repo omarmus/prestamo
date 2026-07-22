@@ -18,8 +18,10 @@ export const AdminCustomerListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
+export type AdminCustomerListQuery = z.infer<typeof AdminCustomerListQuerySchema>;
 
 export const AdminNotesQuerySchema = z.object({
   entityType: z.enum(['CUSTOMER', 'LOAN', 'APPLICATION']),
   entityId: z.string().uuid(),
 });
+export type AdminNotesQuery = z.infer<typeof AdminNotesQuerySchema>;
