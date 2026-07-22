@@ -10,7 +10,7 @@ timestamp: 2026-07-16T12:00:00-04:00
 
 ## Capacidades
 
-- **Register** — crear usuario con email + password (argon2id hashing)
+- **Register** — crear usuario con email + password (argon2id hashing). Requiere `documentNumber` (CI obligatorio).
 - **Login** — autenticar credenciales, emitir access token (JWT 15m) + refresh token (7d)
 - **Refresh** — rotación de refresh tokens con detección de reuso (token rotation)
 - **Me** — obtener perfil del usuario autenticado
@@ -28,7 +28,7 @@ timestamp: 2026-07-16T12:00:00-04:00
 
 | Método | Ruta | Body | Auth |
 |--------|------|------|------|
-| POST | `/auth/register` | `{email, password, name, phone?}` | No |
+| POST | `/auth/register` | `{email, password, name, phone, documentNumber, documentType?}` | No |
 | POST | `/auth/login` | `{email, password}` | No |
 | POST | `/auth/refresh` | `{refreshToken}` | No |
 | GET | `/auth/me` | — | JWT required |

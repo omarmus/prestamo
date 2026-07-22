@@ -33,6 +33,7 @@ Entidad raíz del módulo Identity. Propiedades:
 - Email debe ser único en el sistema
 - Password debe tener mínimo 8 caracteres (validación en capa compartida)
 - Refresh token rotation: al refrescar, el token anterior se invalida. Si se reusa un token ya invalidado, todos los refresh tokens del usuario se invalidan (detección de robo)
+- **CI obligatorio**: al registrarse, el cliente debe proporcionar su número de cédula de identidad (`documentNumber`). Se almacena en el Customer asociado al User. `documentType` por defecto es `"CI"`.
 
 ## Errores de Dominio
 

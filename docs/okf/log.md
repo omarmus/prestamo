@@ -123,6 +123,17 @@
 
 ## 2026-07-22
 
+### CI obligatorio al registrarse
+- **documentType + documentNumber**: ahora son campos requeridos al registrar un cliente
+- **Prisma schema**: `documentType String @default("CI")`, `documentNumber String NOT NULL`
+- **Customer entity**: `createFromUser(user, documentType, documentNumber)` — validación de documentNumber no vacío
+- **RegisterSchema (shared)**: agrega `documentNumber` (required) y `documentType` con default `'CI'`
+- **RegisterForm (frontend)**: nuevo campo "Cédula de Identidad" entre teléfono y contraseña
+- **Mastra tools**: `register-customer` tool y `customer-registration` workflow requieren `documentNumber`
+- **Agente customer-support**: instrucciones actualizadas para pedir CI durante registro
+- **Fallback**: `prisma-customer.repository.ts` toDomain usa `?? 'CI'`/`?? ''` para registros legacy con NULL
+- **Tests**: 241 unit tests pasando, solo fallan 3 de integración (DB/Redis no disponible)
+
 ### Migración Chatbot WhatsApp a Mastra AI Framework
 - **3 PRs completados**: Foundation → Tools + Migration → Workflows + Cleanup
 - **Nuevo**: `apps/api/mastra/` con agente "Asistente de Préstamos" + 7 tools + 2 workflows
